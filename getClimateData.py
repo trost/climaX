@@ -3,6 +3,7 @@
 import sys
 from itertools import starmap
 from datetime import date
+import argparse
 
 from vpd_heatsum import calc_VPD
 from queries import PREC_QUERY, IRRI_QUERY, FAST_CLIMATE_QUERY, DAYLIGHT_QUERY
@@ -149,26 +150,27 @@ def calculateEvaporation(rawData):
     # return daily PenmanEvaporation for daily means of vpd and windspeed
     return {date_: PenmanEvaporation(mean(dailyVPD[date_]),
                                      mean(dailyWindSpeed[date_]))
-
             for date_ in dates}
 
 
-def main(argv):
-
-    cultureID = 56878
-    floweringDate = '2012-07-01'
+def main(cultureID, floweringDate, soilVolume, availMoistCap):
+    """
+    Parameters
+    ----------
+    cultureID : int
+        ID of the culture, e.g. 56878
+    floweringDate : string
+        ??? date string in YYYY-MM-DD format, e.g. '2012-07-01'
+    soilVolume : int
+        soil volume in ???, e.g. 42
+    availMoistCap : float
+        ???, e.g. 0.14
+    """
+    #~ cultureID = 56878 # don't overwrite input params
+    #~ floweringDate = '2012-07-01' # don't overwrite input params
 
     # Parameters for Area 5544 (Atting), ooo spooky :O
-    soilVolume, availMoistCap = 42, 0.14
-
-    """
-    Script needs to be called from command line for each culture
-
-    cultureID = argv[0]
-    floweringDate = argv[1]
-    soilVolume = argv[2]
-    availMoistCap = argv[3]
-    """
+    #~ soilVolume, availMoistCap = 42, 0.14 # don't overwrite input params
 
     C.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
     precipitation = dict(map(lambda x: (x[0], x[1:]),
@@ -195,9 +197,16 @@ def main(argv):
                                              flowerDate=floweringDate)
 
     print tempStressDays + droughtStressDays + lightIntensity
-
     pass
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('culture_id', type=int)
+    parser.add_argument('flowering_date')
+    parser.add_argument('soil_volume', type=int)
+    parser.add_argument('available_moist_cap', type=float)
+    args = parser.parse_args(sys.argv[1:])
+
+    main(args.culture_id, args.flowering_date, args.soil_volume,
+         args.available_moist_cap)
