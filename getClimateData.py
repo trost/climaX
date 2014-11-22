@@ -5,7 +5,8 @@ from itertools import starmap
 from datetime import date
 
 from vpd_heatsum import calc_VPD
-import login
+
+import login  # TODO: get the real login module from Christian, this is fake
 DB = login.get_db()
 C = DB.cursor()
 
