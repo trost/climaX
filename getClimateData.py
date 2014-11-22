@@ -1,14 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-#sys.path.append('/home/schudoma/projects/trost/QSolanum')
-#sys.path.append('/home/schudoma/projects/trost/QSolanum/climaX')
-
-sys.path.append('d:/work/TROST/Climate_Model')
-
 from itertools import starmap
 from datetime import datetime, date
-
 import os 
 import pickle
 
