@@ -163,7 +163,8 @@ def calculateEvaporation(rawData):
             for date_ in dates}
 
 
-def main(cultureID, floweringDate, soilVolume, availMoistCap):
+def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
+         availMoistCap=0.14):
     """
     Parameters
     ----------
@@ -176,12 +177,6 @@ def main(cultureID, floweringDate, soilVolume, availMoistCap):
     availMoistCap : float
         ???, e.g. 0.14
     """
-    #~ cultureID = 56878 # don't overwrite input params
-    #~ floweringDate = '2012-07-01' # don't overwrite input params
-
-    # Parameters for Area 5544 (Atting), ooo spooky :O
-    #~ soilVolume, availMoistCap = 42, 0.14 # don't overwrite input params
-
     C.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
     precipitation = dict(map(lambda x: (x[0], x[1:]),
                              [row for row in C.fetchall()]))
@@ -206,8 +201,9 @@ def main(cultureID, floweringDate, soilVolume, availMoistCap):
     lightIntensity = calculateLightIntensity(lightData,
                                              flowerDate=floweringDate)
 
-    print tempStressDays + droughtStressDays + lightIntensity
-    pass
+    print "temperature stress days:", tempStressDays
+    print "drought stress days:", droughtStressDays
+    print "light intensity:", lightIntensity
 
 
 if __name__ == '__main__':
