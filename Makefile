@@ -16,3 +16,5 @@ reinstall: clean uninstall install
 lint:
 	flake8 .
 
+test:
+	getClimateData.py 56878 2012-07-01 42 0.14
