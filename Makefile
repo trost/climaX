@@ -1,7 +1,7 @@
 # a '-' before a shell command causes make to ignore its exit code (errors)
 
 install:
-	apt-get install python-mysqldb
+	apt-get install python-mysqldb python-pip python-dev
 	python setup.py install
 
 uninstall:
