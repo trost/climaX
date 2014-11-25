@@ -212,10 +212,14 @@ def main(cultureID, floweringDate, soilVolume, availMoistCap):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('culture_id', type=int)
-    parser.add_argument('flowering_date')
-    parser.add_argument('soil_volume', type=int)
-    parser.add_argument('available_moist_cap', type=float)
+    parser.add_argument('culture_id', type=int,
+                        help='ID of the culture, e.g. 56878')
+    parser.add_argument('flowering_date',
+                        help='date string in YYYY-MM-DD format, e.g. 2012-07-01')
+    parser.add_argument('soil_volume', type=int,
+                        help='soil volume, e.g. 42')
+    parser.add_argument('available_moist_cap', type=float,
+                        help='moisture capacity, e.g. 0.14')
     args = parser.parse_args(sys.argv[1:])
 
     main(args.culture_id, args.flowering_date, args.soil_volume,
