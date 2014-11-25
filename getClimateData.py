@@ -64,6 +64,16 @@ def calculateSoilWater(precipitation, evaporation,
 
 def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
+    """
+    rawData : ???
+        ???
+    tub : float
+        temperature upper bound
+    tlb : float
+        temperature lower bound
+    flowerDate : str
+        date string in YYYY-MM-DD format
+    """
     stressScore = lambda x: len(x) * sum(x)/len(x)
 
     #~ hotDays, coldDays = [], [] # unused variables
