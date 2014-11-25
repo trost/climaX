@@ -1,34 +1,25 @@
 #!/usr/bin/env python
 # Author: Arne Neumann
 
-"""This is a mock replacement of the missing login module"""
+"""
+This module handles the connection to the MySQL database.
+
+To connect to the database, you'll need a file containing your login
+credentials called 'login.yaml'. In case you don't have one, see
+'login.yaml.example' for an example of such a file.
+"""
+
+import os
 
 import MySQLdb
+import yaml
 
+CONFIG_FILE = open('login.yaml', 'r')
+CONFIG = yaml.load(CONFIG_FILE)
 
-def get_db():
-    return FakeDatabaseObject()
-
-
-def get_real_db(host="localhost", user="john", passwd="megajonhy",
-                db="jonhydb"):
+def get_db(host=CONFIG['host'], user=CONFIG['user'],
+           passwd=CONFIG['passwd'], db=CONFIG['db']):
     return MySQLdb.connect(host, user, passwd, db)
 
-
-class FakeDatabaseObject(object):
-    def __init__(self):
-        pass
-
-    def cursor(self):
-        return FakeCursor()
-
-
-class FakeCursor(object):
-    def __init__(self):
-        pass
-
-    def execute(self, arg1):
-        pass
-
-    def fetchall(self):
-        return []
+if __name__ == '__main__':
+    print get_db()
