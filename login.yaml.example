@@ -1,0 +1,5 @@
+host: db.example.com
+user: ernie
+passwd: iheartbert
+db: my_awesome_database
+
