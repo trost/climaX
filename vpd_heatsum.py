@@ -11,7 +11,7 @@ import math
 import datetime
 
 import numpy as np
-from BeautifulSoup import BeautifulStoneSoup as BSS
+from bs4 import BeautifulStoneSoup as BSS
 
 __author__ = 'Christian Schudoma'
 __copyright__ = 'Copyright 2013-2014, Christian Schudoma'
