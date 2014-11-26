@@ -18,3 +18,4 @@ lint:
 
 test:
 	getClimateData.py 56878 2012-07-01 42 0.14
+	getClimateData.py 44443 2011-06-01 27 0.09
