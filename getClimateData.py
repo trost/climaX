@@ -180,7 +180,7 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
     precipitation = dict(map(lambda x: (x[0], x[1:]),
                              [row for row in C.fetchall()]))
     C.execute(IRRI_QUERY % {'CULTURE_ID': cultureID})
-    irrigation = dict(map(lambda x: (x[0].date(), x[1:]),
+    irrigation = dict(map(lambda x: (x[0], x[1:]),
                           [row for row in C.fetchall()]))
 
     C.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': cultureID})
