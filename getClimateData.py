@@ -74,9 +74,8 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
     flowerDate : str
         date string in YYYY-MM-DD format
     """
-    stressScore = lambda x: len(x) * sum(x)/len(x)
+    stressScore = lambda x: sum(x)
 
-    #~ hotDays, coldDays = [], [] # unused variables
     dates = [row[0].date() for row in rawData]
     fDate = map(int, flowerDate.split('-'))
     print fDate
