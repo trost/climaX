@@ -13,12 +13,18 @@ import login  # TODO: get the real login module from Christian, this is fake
 DB = login.get_db()
 C = DB.cursor()
 
+def datestring2object(datestring):
+    """
+    takes a YYYY-MM-DD formatted date string and converts it into a
+    datetime.date instance.
+    """
+    return date(*map(int, datestring.split('-')))
+
 
 def calculateLightIntensity(rawData, flowerDate='2012-07-01'):
     L1, L2 = [], []
     dates = [row[0].date() for row in rawData]
-    fDate = map(int, flowerDate.split('-'))
-    fDate = date(fDate[0], fDate[1], fDate[2])
+    flowering_date = datestring2object(flowerDate)
 
     dailyLight = {date_: [] for date_ in set(dates)}
     for row in rawData:
@@ -27,7 +33,7 @@ def calculateLightIntensity(rawData, flowerDate='2012-07-01'):
 
     L1, L2 = [], []
     for day in dailyLight:
-        if day < fDate:
+        if day < flowering_date:
             L1.append(sum(dailyLight[day]) * len(dailyLight[day]))
         else:
             L2.append(sum(dailyLight[day]) * len(dailyLight[day]))
@@ -77,9 +83,8 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
     stressScore = lambda x: sum(x)
 
     dates = [row[0].date() for row in rawData]
-    fDate = map(int, flowerDate.split('-'))
-    print fDate
-    fDate = date(fDate[0], fDate[1], fDate[2])
+    flowering_date = datestring2object(flowerDate)
+
     dailyMinMaxTemp = {date_: [1000.0, -1000.0] for date_ in set(dates)}
     for row in rawData:
         date_, temp = row[0].date(), row[1]
@@ -90,12 +95,12 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
         tMin, tMax = dailyMinMaxTemp[day]
         coldStress, heatStress = tMin < tlb, tMax > tub
 
-        if day < fDate:
+        if day < flowering_date:
             if coldStress:
                 C1.append(abs(tlb - tMin))
             if heatStress:
                 H1.append(abs(tMax - tub))
-        else:
+        else:  # day >= flowering_date
             if coldStress:
                 C2.append(abs(tlb - tMin))
             if heatStress:
@@ -114,12 +119,12 @@ def calculateDroughtStressDays(rawData,
     soilWater = calculateSoilWater(precipitation, evaporation,
                                    soilVolume, availMoistCap,
                                    irrigation=irrigation)
-    fDate = map(int, flowerDate.split('-'))
-    fDate = date(fDate[0], fDate[1], fDate[2])
+    flowering_date = datestring2object(flowerDate)
+
     W1, W2 = 0, 0
     for day in soilWater:
         if soilWater[day] < stressThreshold:
-            if day < fDate:
+            if day < flowering_date:
                 W1 += 1
             else:
                 W2 += 1
