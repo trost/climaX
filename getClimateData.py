@@ -21,7 +21,14 @@ def datestring2object(datestring):
     return date(*map(int, datestring.split('-')))
 
 
-def calculateLightIntensity(rawData, flowerDate='2012-07-01'):
+def get_light_intensity(rawData, flowerDate='2012-07-01'):
+    """
+    Returns
+    -------
+    lightIntensity : 2-tuple of float
+        light intensity (before flowering, after flowering),
+        e.g. (59630.84567157448, 49066.49380313513)
+    """
     L1, L2 = [], []
     dates = [row[0].date() for row in rawData]
     flowering_date = datestring2object(flowerDate)
@@ -35,23 +42,20 @@ def calculateLightIntensity(rawData, flowerDate='2012-07-01'):
     for day in dailyLight:
         if day < flowering_date:
             L1.append(sum(dailyLight[day]) * len(dailyLight[day]))
-        else:
+        else: # day >= flowering_date
             L2.append(sum(dailyLight[day]) * len(dailyLight[day]))
 
     return sum(L1) / len(L1), sum(L2) / len(L2)
 
 
-def calculateSoilWater(precipitation, evaporation,
-                       soilVolume, availMoistCap, irrigation=dict()):
-
+def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
+               irrigation=dict()):
     soilWater = []
     dates = sorted(evaporation)
-    #~ initSoilWater = 0 # unused variable
 
     soilWater.append(0)  # initial
     # Initial 14 days (0-13) ... sum up water gain up to soil capacity
     for date_ in dates[:14]:
-
         waterGain = precipitation.get(date_, [0.0])[0] \
             + irrigation.get(date_, [0.0])[0]
         soilWater.append(min(soilVolume, waterGain + soilWater[-1]))
@@ -68,7 +72,7 @@ def calculateSoilWater(precipitation, evaporation,
     return dict(zip(dates, soilWater[1:]))
 
 
-def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
+def get_temp_stress_days(rawData, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
     """
     Parameters
@@ -85,7 +89,10 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
     Returns
     -------
     tempStressDays : 4-tuple of float
-        ???, e.g. (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
+        sum of tempurature differences for (cold stress days before flowering,
+        cold stress days after flowering, heat stress days before flowering,
+        heat stress days after flowering).
+        Example: (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
     """
     dates = [row[0].date() for row in rawData]
     flowering_date = datestring2object(flowerDate)
@@ -114,16 +121,23 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
     return tuple(sum(dates) for dates in (C1, C2, H1, H2))
 
 
-def calculateDroughtStressDays(rawData,
-                               soilVolume, availMoistCap,
-                               precipitation, irrigation,
-                               stressThreshold=10.0,
-                               flowerDate='2012-07-01'):
-    evaporation = calculateEvaporation(rawData)
+def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
+                        irrigation, stressThreshold=10.0,
+                        flowerDate='2012-07-01'):
+    """
+    calculates the number of drought stress days before and after the flowering
+    date.
 
-    soilWater = calculateSoilWater(precipitation, evaporation,
-                                   soilVolume, availMoistCap,
-                                   irrigation=irrigation)
+    Returns
+    -------
+    droughtStressDays : 2-tuple of int
+        number of drought stress days (before flowering, after flowering),
+        e.g. (16, 0)
+    """
+    evaporation = get_evaporation(rawData)
+
+    soilWater = get_soil_water(precipitation, evaporation, soilVolume,
+                           availMoistCap, irrigation=irrigation)
     flowering_date = datestring2object(flowerDate)
 
     W1, W2 = 0, 0
@@ -131,13 +145,12 @@ def calculateDroughtStressDays(rawData,
         if soilWater[day] < stressThreshold:
             if day < flowering_date:
                 W1 += 1
-            else:
+            else:  # day >= flowering_date
                 W2 += 1
-
     return W1, W2
 
 
-def calculateEvaporation(rawData):
+def get_evaporation(rawData):
     """
     ATT: rel. humidity is coming in as percentage, needs to be fraction
     """
@@ -189,11 +202,16 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
     Returns
     -------
     tempStressDays : 4-tuple of float
-        ???, e.g. (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
+        sum of tempurature differences for (cold stress days before flowering,
+        cold stress days after flowering, heat stress days before flowering,
+        heat stress days after flowering).
+        Example: (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
     droughtStressDays : 2-tuple of int
-        ???, e.g. (16, 0)
+        number of drought stress days (before flowering, after flowering),
+        e.g. (16, 0)
     lightIntensity : 2-tuple of float
-        ???, e.g. (59630.84567157448, 49066.49380313513)
+        light intensity (before flowering, after flowering),
+        e.g. (59630.84567157448, 49066.49380313513)
     """
     C.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
     precipitation = dict(map(lambda x: (x[0], x[1:]),
@@ -205,19 +223,17 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
     C.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': cultureID})
     climateData = [row for row in C.fetchall()]
 
-    tempStressDays = calculateTempStressDays(climateData,
-                                             flowerDate=floweringDate)
-    droughtStressDays = calculateDroughtStressDays(climateData,
-                                                   soilVolume, availMoistCap,
-                                                   precipitation, irrigation,
-                                                   stressThreshold=10.0,
-                                                   flowerDate=floweringDate)
+    tempStressDays = \
+        get_temp_stress_days(climateData, flowerDate=floweringDate)
+    droughtStressDays = \
+        get_drought_stress_days(climateData, soilVolume, availMoistCap,
+                            precipitation, irrigation, stressThreshold=10.0,
+                            flowerDate=floweringDate)
 
     C.execute(DAYLIGHT_QUERY % {'CULTURE_ID': cultureID})
     lightData = [row for row in C.fetchall()]
 
-    lightIntensity = calculateLightIntensity(lightData,
-                                             flowerDate=floweringDate)
+    lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
     return tempStressDays, droughtStressDays, lightIntensity
 
 
