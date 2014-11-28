@@ -71,6 +71,8 @@ def calculateSoilWater(precipitation, evaporation,
 def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
     """
+    Parameters
+    ----------
     rawData : ???
         ???
     tub : float
@@ -79,9 +81,12 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
         temperature lower bound
     flowerDate : str
         date string in YYYY-MM-DD format
-    """
-    stressScore = lambda x: sum(x)
 
+    Returns
+    -------
+    tempStressDays : 4-tuple of float
+        ???, e.g. (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
+    """
     dates = [row[0].date() for row in rawData]
     flowering_date = datestring2object(flowerDate)
 
@@ -106,7 +111,7 @@ def calculateTempStressDays(rawData, tub=30.0, tlb=8.0,
             if heatStress:
                 H2.append(abs(tMax - tub))
 
-    return tuple(map(stressScore, [C1, C2, H1, H2]))
+    return tuple(sum(dates) for dates in (C1, C2, H1, H2))
 
 
 def calculateDroughtStressDays(rawData,
@@ -180,6 +185,15 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
         soil volume in ???, e.g. 42
     availMoistCap : float
         ???, e.g. 0.14
+
+    Returns
+    -------
+    tempStressDays : 4-tuple of float
+        ???, e.g. (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
+    droughtStressDays : 2-tuple of int
+        ???, e.g. (16, 0)
+    lightIntensity : 2-tuple of float
+        ???, e.g. (59630.84567157448, 49066.49380313513)
     """
     C.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
     precipitation = dict(map(lambda x: (x[0], x[1:]),
@@ -204,10 +218,7 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
 
     lightIntensity = calculateLightIntensity(lightData,
                                              flowerDate=floweringDate)
-
-    print "temperature stress days:", tempStressDays
-    print "drought stress days:", droughtStressDays
-    print "light intensity:", lightIntensity
+    return tempStressDays, droughtStressDays, lightIntensity
 
 
 if __name__ == '__main__':
@@ -222,5 +233,9 @@ if __name__ == '__main__':
                         help='moisture capacity, e.g. 0.14')
     args = parser.parse_args(sys.argv[1:])
 
-    main(args.culture_id, args.flowering_date, args.soil_volume,
-         args.available_moist_cap)
+    tempStressDays, droughtStressDays, lightIntensity = \
+        main(args.culture_id, args.flowering_date, args.soil_volume,
+             args.available_moist_cap)
+    print tempStressDays
+    print droughtStressDays
+    print lightIntensity
