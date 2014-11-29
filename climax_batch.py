@@ -49,9 +49,6 @@ def format_climate_data(climate_data):
 
 
 if __name__ == '__main__':
-    database = login.get_db()
-    cursor = database.cursor()
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-i', '--input_file', type=argparse.FileType('r'),
@@ -64,6 +61,12 @@ if __name__ == '__main__':
               "heat stress days (before/after flowering) and light sum "
               "(before/after flowering)"))
     args = parser.parse_args(sys.argv[1:])
+
+    if not args.input_file:
+        sys.exit(1)
+
+    database = login.get_db()
+    cursor = database.cursor()
 
     args.output_file.write(
         ('drought-before\tdrought-after\tcold-before\tcold-after\theat-before'
