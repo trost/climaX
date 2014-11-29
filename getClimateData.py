@@ -10,9 +10,6 @@ from queries import PREC_QUERY, IRRI_QUERY, FAST_CLIMATE_QUERY, DAYLIGHT_QUERY
 import login  # TODO: get the real login module from Christian, this is fake
 
 
-DB = login.get_db()
-C = DB.cursor()
-
 def datestring2object(datestring):
     """
     takes a YYYY-MM-DD formatted date string and converts it into a
@@ -185,11 +182,13 @@ def get_evaporation(rawData):
             for date_ in dates}
 
 
-def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
+def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
          availMoistCap=0.14):
     """
     Parameters
     ----------
+    cursor : MySQLdb.cursors.Cursor
+        cursor to the MySQL database
     cultureID : int
         ID of the culture, e.g. 56878
     floweringDate : string
@@ -213,15 +212,15 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
         light intensity (before flowering, after flowering),
         e.g. (59630.84567157448, 49066.49380313513)
     """
-    C.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
+    cursor.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
     precipitation = dict(map(lambda x: (x[0], x[1:]),
-                             [row for row in C.fetchall()]))
-    C.execute(IRRI_QUERY % {'CULTURE_ID': cultureID})
+                             [row for row in cursor.fetchall()]))
+    cursor.execute(IRRI_QUERY % {'CULTURE_ID': cultureID})
     irrigation = dict(map(lambda x: (x[0], x[1:]),
-                          [row for row in C.fetchall()]))
+                          [row for row in cursor.fetchall()]))
 
-    C.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': cultureID})
-    climateData = [row for row in C.fetchall()]
+    cursor.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': cultureID})
+    climateData = [row for row in cursor.fetchall()]
 
     tempStressDays = \
         get_temp_stress_days(climateData, flowerDate=floweringDate)
@@ -230,14 +229,17 @@ def main(cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
                             precipitation, irrigation, stressThreshold=10.0,
                             flowerDate=floweringDate)
 
-    C.execute(DAYLIGHT_QUERY % {'CULTURE_ID': cultureID})
-    lightData = [row for row in C.fetchall()]
+    cursor.execute(DAYLIGHT_QUERY % {'CULTURE_ID': cultureID})
+    lightData = [row for row in cursor.fetchall()]
 
     lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
     return tempStressDays, droughtStressDays, lightIntensity
 
 
 if __name__ == '__main__':
+    database = login.get_db()
+    cursor = database.cursor()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('culture_id', type=int,
                         help='ID of the culture, e.g. 56878')
@@ -250,7 +252,7 @@ if __name__ == '__main__':
     args = parser.parse_args(sys.argv[1:])
 
     tempStressDays, droughtStressDays, lightIntensity = \
-        main(args.culture_id, args.flowering_date, args.soil_volume,
+        main(cursor, args.culture_id, args.flowering_date, args.soil_volume,
              args.available_moist_cap)
     print tempStressDays
     print droughtStressDays
