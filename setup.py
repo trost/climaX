@@ -18,7 +18,7 @@ setup(name='climaX',
       author_email='',
       url='https://github.com/arne-cl/climaX',
       py_modules=['getClimateData', 'vpd_heatsum', 'queries', 'login'],
-      scripts=['getClimateData.py'],
+      scripts=['getClimateData.py', 'climax_batch.py'],
       license='MIT License',
       install_requires=['mysql-python', 'pyyaml', 'BeautifulSoup4'],
      )
