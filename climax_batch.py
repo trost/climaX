@@ -51,15 +51,17 @@ def format_climate_data(climate_data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-i', '--input_file', type=argparse.FileType('r'),
+        'input_file', type=argparse.FileType('r'),
         help=("tsv-file containing culture_id, flowering date, soil volume "
               "and field capacity"))
     parser.add_argument(
-        '-o', '--output_file', default=sys.stdout, type=argparse.FileType('w'),
+        'output_file', nargs='?', default=sys.stdout,
+        type=argparse.FileType('w'),
         help=("tsv-file containing drought stress days (before/after "
               "flowering), cold stress days (before/after flowering), "
               "heat stress days (before/after flowering) and light sum "
-              "(before/after flowering)"))
+              "(before/after flowering). writes to STDOUT, if no filename "
+              "is given."))
     args = parser.parse_args(sys.argv[1:])
 
     if not args.input_file:
