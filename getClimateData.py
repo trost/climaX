@@ -193,7 +193,7 @@ def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
         ID of the culture, e.g. 56878
     floweringDate : string
         ??? date string in YYYY-MM-DD format, e.g. '2012-07-01'
-    soilVolume : int
+    soilVolume : int or float
         soil volume in ???, e.g. 42
     availMoistCap : float
         ???, e.g. 0.14
@@ -245,8 +245,8 @@ if __name__ == '__main__':
                         help='ID of the culture, e.g. 56878')
     parser.add_argument('flowering_date',
                         help='date string in YYYY-MM-DD format, e.g. 2012-07-01')
-    parser.add_argument('soil_volume', type=int,
-                        help='soil volume, e.g. 42')
+    parser.add_argument('soil_volume', type=float,
+                        help='soil volume, e.g. 42 or 27.5')
     parser.add_argument('available_moist_cap', type=float,
                         help='moisture capacity, e.g. 0.14')
     args = parser.parse_args(sys.argv[1:])
