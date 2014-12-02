@@ -9,6 +9,8 @@ JOIN cultures C ON P.location_id = C.location_id
 WHERE C.id = %(CULTURE_ID)i
 ORDER BY P.datum;
 """.strip().replace('\n', ' ')
+# results in two columns: date (YYYY-MM-DD), amount (float)
+ 
 
 IRRI_QUERY = """
 SELECT
@@ -19,6 +21,9 @@ FROM irrigation I
 WHERE I.culture_id = %(CULTURE_ID)i
 ORDER BY I.datum;
 """.strip().replace('\n', ' ')
+# results in three columns: date (YYYY-MM-DD), amount (float), treatment_id (169 = control, 170 = stress)
+
+
 
 FAST_CLIMATE_QUERY = """
 SELECT
@@ -58,6 +63,9 @@ and UUHV.invalid is NULL
 ORDER BY UUHV.datum) hum
 on temp.date2 = hum.date3;
 """.strip().replace('\n', ' ')
+# results in four columns: date-time (YYYY-MM-DD hh:mm:ss), hourly temperature in degree celsius (float), 
+# hourly windspeed in m/sec (float), hourly relative humidity in % (integer)
+
 
 DAYLIGHT_QUERY = """
 SELECT
@@ -70,4 +78,5 @@ AND (sC.datum >= C.planted + interval 14 day)
 AND (sC.datum < C.terminated)
 ORDER BY sC.datum
 """.strip().replace('\n', ' ')
+# results in two columns: date-time (YYYY-MM-DD hh:mm:ss), hourly solar radiation (float)
 
