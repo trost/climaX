@@ -32,6 +32,7 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (FFHM.datum >= C.planted + interval 14 day)
 and FFHM.datum < C.terminated
+and FFHM.invalid is NULL
 ORDER BY FFHM.datum) wind
 on C.id = wind.C1
 left join
@@ -42,6 +43,7 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (TAHV.datum >= C.planted + interval 14 day)
 and TAHV.datum < C.terminated
+and TAHV.invalid is NULL
 ORDER BY TAHV.datum) temp
 on wind.date1 = temp.date2
 left join
@@ -52,6 +54,7 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (UUHV.datum >= C.planted + interval 14 day)
 and UUHV.datum < C.terminated
+and UUHV.invalid is NULL
 ORDER BY UUHV.datum) hum
 on temp.date2 = hum.date3;
 """.strip().replace('\n', ' ')
