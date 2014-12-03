@@ -53,16 +53,14 @@ def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
     soilWater.append(0)  # initial
     # Initial 14 days (0-13) ... sum up water gain up to soil capacity
     for date_ in dates[:14]:
-        waterGain = precipitation.get(date_, [0.0])[0] \
-            + irrigation.get(date_, [0.0])[0]
+        waterGain = precipitation.get(date_, 0.0) + irrigation.get(date_, [0.0])[0]
         soilWater.append(min(soilVolume, waterGain + soilWater[-1]))
 
     # From day 14 on calculate net water = soilWater from day before +
     # evaporation loss + water gain
     for date_ in dates[14:]:
         evaporationLoss = evaporation.get(date_, 0.0)
-        waterGain = precipitation.get(date_, [0.0])[0] \
-            + irrigation.get(date_, [0.0])[0]
+        waterGain = precipitation.get(date_, 0.0) + irrigation.get(date_, [0.0])[0]
         netWater = soilWater[-1] + evaporationLoss + waterGain
         soilWater.append(max(min(netWater, soilVolume), 0))
 
@@ -213,8 +211,8 @@ def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
         e.g. (59630.84567157448, 49066.49380313513)
     """
     cursor.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
-    precipitation = dict(map(lambda x: (x[0], x[1:]),
-                             [row for row in cursor.fetchall()]))
+    precipitation = {date: precip for (date, precip) in cursor.fetchall()}
+
     cursor.execute(IRRI_QUERY % {'CULTURE_ID': cultureID})
     irrigation = dict(map(lambda x: (x[0], x[1:]),
                           [row for row in cursor.fetchall()]))
