@@ -1,5 +1,9 @@
 # a '-' before a shell command causes make to ignore its exit code (errors)
 
+# we have a folder called 'test', which make would interpret as the result of
+# make test. .PHONY tells make to always run these targets.
+.PHONY: all test clean
+
 install:
 	apt-get install python-mysqldb python-pip python-dev
 	python setup.py install
