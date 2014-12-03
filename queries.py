@@ -9,6 +9,8 @@ JOIN cultures C ON P.location_id = C.location_id
 WHERE C.id = %(CULTURE_ID)i
 ORDER BY P.datum;
 """.strip().replace('\n', ' ')
+# results in two columns: date (YYYY-MM-DD), amount (float)
+ 
 
 IRRI_QUERY = """
 SELECT
@@ -19,6 +21,9 @@ FROM irrigation I
 WHERE I.culture_id = %(CULTURE_ID)i
 ORDER BY I.datum;
 """.strip().replace('\n', ' ')
+# results in three columns: date (YYYY-MM-DD), amount (float), treatment_id (169 = control, 170 = stress)
+
+
 
 FAST_CLIMATE_QUERY = """
 SELECT
@@ -32,6 +37,7 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (FFHM.datum >= C.planted + interval 14 day)
 and FFHM.datum < C.terminated
+and FFHM.invalid is NULL
 ORDER BY FFHM.datum) wind
 on C.id = wind.C1
 left join
@@ -42,6 +48,7 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (TAHV.datum >= C.planted + interval 14 day)
 and TAHV.datum < C.terminated
+and TAHV.invalid is NULL
 ORDER BY TAHV.datum) temp
 on wind.date1 = temp.date2
 left join
@@ -52,9 +59,13 @@ left join cultures C on C.location_id = uWS.location_id
 where C.id = %(CULTURE_ID)i
 and (UUHV.datum >= C.planted + interval 14 day)
 and UUHV.datum < C.terminated
+and UUHV.invalid is NULL
 ORDER BY UUHV.datum) hum
 on temp.date2 = hum.date3;
 """.strip().replace('\n', ' ')
+# results in four columns: date-time (YYYY-MM-DD hh:mm:ss), hourly temperature in degree celsius (float), 
+# hourly windspeed in m/sec (float), hourly relative humidity in % (integer)
+
 
 DAYLIGHT_QUERY = """
 SELECT
@@ -67,4 +78,5 @@ AND (sC.datum >= C.planted + interval 14 day)
 AND (sC.datum < C.terminated)
 ORDER BY sC.datum
 """.strip().replace('\n', ' ')
+# results in two columns: date-time (YYYY-MM-DD hh:mm:ss), hourly solar radiation (float)
 
