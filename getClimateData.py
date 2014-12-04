@@ -47,24 +47,79 @@ def get_light_intensity(rawData, flowerDate='2012-07-01'):
 
 def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
                irrigation=dict()):
-    soilWater = []
+    """
+    Parameters
+    ----------
+    precipitation : dict, key = datatime.date, value = float
+        ???
+    evaporation
+    soilVolume : float
+        soil volume
+    availMoistCap : float
+        ???
+    irrigation : dict, key = datetime.date, value = list of (float, long) tuples
+        maps from a date to a list of (irrigation amount, treatment_id) tuples.
+        The treatment ID is either 169 (control group) or 170 (stress).
+        Default: empty dict (irrigation data is not available for all
+        days / field trials)
+
+    Returns
+    -------
+    soil_water : dict or (dict, dict) tuple
+        Iff ``irrigation`` is not empty, this returns a tuple of (control soil
+        water, stress soil water) dictionaries. Both map from a date
+        (datetime.date) to a soil water amount (float).
+        Otherwise, this will only return one such dictionary.
+    """
+    # initial value needed to calculate yesterday's soil water
+    soil_water, control_soil_water, stress_soil_water = [0], [0], [0]
     dates = sorted(evaporation)
 
-    soilWater.append(0)  # initial
-    # Initial 14 days (0-13) ... sum up water gain up to soil capacity
-    for date_ in dates[:14]:
-        waterGain = precipitation.get(date_, 0.0) + irrigation.get(date_, [0.0])[0]
-        soilWater.append(min(soilVolume, waterGain + soilWater[-1]))
+    if irrigation:
+        # Initial 14 days (0-13) ... sum up water gain up to soil capacity
+        for date in dates[:14]:
+            for irri_amount, treatment_id in irrigation[date]:
+                waterGain = precipitation.get(date, 0.0) + irri_amount
+                current_soil_water = min(soilVolume, waterGain + soil_water[-1])
+                if treatment_id == CONTROL:
+                    control_soil_water.append(current_soil_water)
+                elif treatment_id == STRESS:
+                    stress_soil_water.append(current_soil_water)
+                else:
+                    raise ValueError("Unexpected treatment ID: {}".format(treatment_id))
 
-    # From day 14 on calculate net water = soilWater from day before +
-    # evaporation loss + water gain
-    for date_ in dates[14:]:
-        evaporationLoss = evaporation.get(date_, 0.0)
-        waterGain = precipitation.get(date_, 0.0) + irrigation.get(date_, [0.0])[0]
-        netWater = soilWater[-1] + evaporationLoss + waterGain
-        soilWater.append(max(min(netWater, soilVolume), 0))
+        # From day 14 on calculate net water = soil_water from day before +
+        # evaporation loss + water gain
+        for date in dates[14:]:
+            for irri_amount, treatment_id in irrigation[date]:
+                evaporationLoss = evaporation.get(date, 0.0)
+                waterGain = precipitation.get(date, 0.0) + irri_amount
+                netWater = soil_water[-1] + evaporationLoss + waterGain
+                current_soil_water = max(min(netWater, soilVolume), 0)
+                if treatment_id == CONTROL:
+                    control_soil_water.append(current_soil_water)
+                elif treatment_id == STRESS:
+                    stress_soil_water.append(current_soil_water)
+                else:
+                    raise ValueError("Unexpected treatment ID: {}".format(treatment_id))
+        return dict(zip(dates, control_soil_water[1:])), \
+            dict(zip(dates, stress_soil_water[1:]))
 
-    return dict(zip(dates, soilWater[1:]))
+    else:  # no irrigation
+        for date in dates[:14]:
+            waterGain = precipitation.get(date, 0.0)
+            current_soil_water = min(soilVolume, waterGain + soil_water[-1])
+            soil_water.append(current_soil_water)
+
+        # From day 14 on calculate net water = soil_water from day before +
+        # evaporation loss + water gain
+        for date in dates[14:]:
+            evaporationLoss = evaporation.get(date, 0.0)
+            waterGain = precipitation.get(date, 0.0)
+            netWater = soil_water[-1] + evaporationLoss + waterGain
+            current_soil_water = max(min(netWater, soilVolume), 0)
+            soil_water.append(current_soil_water)
+        return dict(zip(dates, soil_water[1:]))
 
 
 def get_temp_stress_days(rawData, tub=30.0, tlb=8.0,
