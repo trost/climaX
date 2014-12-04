@@ -8,6 +8,9 @@ install:
 	apt-get install python-mysqldb python-pip python-dev
 	python setup.py install
 
+install-ubuntu: install
+	sudo easy_install mysql-python
+
 uninstall:
 	yes | pip uninstall climaX
 
