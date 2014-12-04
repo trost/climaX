@@ -321,9 +321,9 @@ def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
 
     cursor.execute(DAYLIGHT_QUERY % {'CULTURE_ID': cultureID})
     lightData = [row for row in cursor.fetchall()]
-
     lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
-    return tempStressDays, droughtStressDays, lightIntensity
+    has_irrigation = True if irrigation else False
+    return has_irrigation, tempStressDays, droughtStressDays, lightIntensity
 
 
 if __name__ == '__main__':
@@ -341,9 +341,17 @@ if __name__ == '__main__':
                         help='moisture capacity, e.g. 0.14')
     args = parser.parse_args(sys.argv[1:])
 
-    tempStressDays, droughtStressDays, lightIntensity = \
+    irrigation, tempStressDays, droughtStressDays, lightIntensity = \
         main(cursor, args.culture_id, args.flowering_date, args.soil_volume,
              args.available_moist_cap)
-    print tempStressDays
-    print droughtStressDays
-    print lightIntensity
+
+    print 'irrigation:', irrigation
+    print 'temperature stress days:', tempStressDays
+    if irrigation:
+        print 'drought stress days:'
+        control_drought_days, stress_drought_days = droughtStressDays
+        print '\tcontrol:', control_drought_days
+        print '\tstress:', stress_drought_days
+    else:
+        print 'drought stress days:', droughtStressDays
+    print 'light intensity:', lightIntensity
