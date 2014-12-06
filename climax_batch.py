@@ -11,7 +11,7 @@ cold-before, cold-after, heat-before, heat-after, light-before, light-after).
 
 import sys
 import argparse
-import warnings
+import traceback
 
 from getClimateData import main
 import login
@@ -98,9 +98,10 @@ if __name__ == '__main__':
          '\tcold-before\tcold-after\theat-before\theat-after'
          '\tlight-before\tlight-after\n'))
 
-    for i, line in enumerate(args.input_file):
+    for i, line in enumerate(args.input_file, 1):
         try:
             climate_data = get_climate_data(line)
             args.output_file.write(format_climate_data(climate_data))
-        except AssertionError as e:
-            warnings.warn(e.message.format(i, args.input_file))
+        except Exception as e:
+            sys.stderr.write('line {} in file {} caused trouble: {}'.format(i, args.input_file.name, line))
+            sys.stderr.write(traceback.format_exc())
