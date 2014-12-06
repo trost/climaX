@@ -215,7 +215,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
     return tuple(sum(dates) for dates in (cold_before, cold_after, heat_before, heat_after))
 
 
-def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
+def get_drought_stress_days(climate_data, soilVolume, availMoistCap, precipitation,
                         irrigation, stressThreshold=10.0,
                         flowerDate='2012-07-01'):
     """
@@ -224,8 +224,11 @@ def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
 
     Parameters
     ----------
-    rawData : list of (datetime.datetime, float, float, float) tuples
-        ???
+    climate_data : list of (datetime.datetime, float, float, float) tuples
+        a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
+        celsius (float), hourly windspeed in m/sec (float),
+        hourly relative humidity in % (float)).
+        WARNING: all hourly values might be missing (None)!
     soilVolume : float
         soil volume
     availMoistCap : float
@@ -258,7 +261,7 @@ def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
                     stress_days_after += 1
         return stress_days_before, stress_days_after
 
-    evaporation = get_evaporation(rawData)
+    evaporation = get_evaporation(climate_data)
     flowering_date = datestring2object(flowerDate)
 
     soil_water = get_soil_water(precipitation, evaporation, soilVolume,
@@ -274,9 +277,17 @@ def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
         return stress_days(no_irrigation, flowering_date, stressThreshold)
 
 
-def get_evaporation(rawData):
+def get_evaporation(climate_data):
     """
     ATT: rel. humidity is coming in as percentage, needs to be fraction
+
+    Parameters
+    ----------
+    climate_data : list of (datetime.datetime, float, float, float) tuples
+        a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
+        celsius (float), hourly windspeed in m/sec (float),
+        hourly relative humidity in % (float)).
+        WARNING: all hourly values might be missing (None)!
     """
     def PenmanEvaporation(vpd, windspeed):
         """
@@ -290,9 +301,9 @@ def get_evaporation(rawData):
         return 0.376 * vpd * (windspeed * ms_to_mph) ** 0.76
 
     # data format: [date, temperature, windspeed, relHumidity]
-    dates = [row[0].date() for row in rawData]
-    windSpeeds = [row[2] for row in rawData]
-    vpd = starmap(calc_VPD, [(row[1], row[3]/100.0) for row in rawData])
+    dates = [row[0].date() for row in climate_data]
+    windSpeeds = [row[2] for row in climate_data]
+    vpd = starmap(calc_VPD, [(row[1], row[3]/100.0) for row in climate_data])
     dailyVPD = {date_: [] for date_ in set(dates)}
     dailyWindSpeed = {date_: [] for date_ in dailyVPD}
     for date_, vpd in zip(dates, vpd):
