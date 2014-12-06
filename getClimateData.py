@@ -157,13 +157,16 @@ def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
     return soil_water
 
 
-def get_temp_stress_days(rawData, tub=30.0, tlb=8.0,
+def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
     """
     Parameters
     ----------
-    rawData : ???
-        ???
+    climate_data : (datetime.datetime, float, float, float)
+        a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
+        celsius (float), hourly windspeed in m/sec (float),
+        hourly relative humidity in % (float)).
+        WARNING: all hourly values might be missing (None)!
     tub : float
         temperature upper bound
     tlb : float
@@ -179,31 +182,37 @@ def get_temp_stress_days(rawData, tub=30.0, tlb=8.0,
         heat stress days after flowering).
         Example: (45.4, 4.3999999999999995, 2.5, 3.8999999999999986)
     """
-    dates = [row[0].date() for row in rawData]
+    dates = [row[0].date() for row in climate_data]
     flowering_date = datestring2object(flowerDate)
 
+    # initialize daily min/max temperature with values with unrealistically
+    # high/low values
     dailyMinMaxTemp = {date_: [1000.0, -1000.0] for date_ in set(dates)}
-    for row in rawData:
+    # iterate over all hourly values to find the real min/max temperature
+    # for each day
+    for row in climate_data:
         date_, temp = row[0].date(), row[1]
-        dailyMinMaxTemp[date_] = [min(temp, dailyMinMaxTemp[date_][0]),
-                                  max(temp, dailyMinMaxTemp[date_][1])]
-    C1, C2, H1, H2 = [], [], [], []
+        if temp: # if there's no temperature value, we don't need to update
+                 # the default values
+            dailyMinMaxTemp[date_] = [min(temp, dailyMinMaxTemp[date_][0]),
+                                      max(temp, dailyMinMaxTemp[date_][1])]
+
+    cold_before, cold_after, heat_before, heat_after = [], [], [], []
     for day in dailyMinMaxTemp:
         tMin, tMax = dailyMinMaxTemp[day]
         coldStress, heatStress = tMin < tlb, tMax > tub
 
         if day < flowering_date:
             if coldStress:
-                C1.append(abs(tlb - tMin))
+                cold_before.append(abs(tlb - tMin))
             if heatStress:
-                H1.append(abs(tMax - tub))
+                heat_before.append(abs(tMax - tub))
         else:  # day >= flowering_date
             if coldStress:
-                C2.append(abs(tlb - tMin))
+                cold_after.append(abs(tlb - tMin))
             if heatStress:
-                H2.append(abs(tMax - tub))
-
-    return tuple(sum(dates) for dates in (C1, C2, H1, H2))
+                heat_after.append(abs(tMax - tub))
+    return tuple(sum(dates) for dates in (cold_before, cold_after, heat_before, heat_after))
 
 
 def get_drought_stress_days(rawData, soilVolume, availMoistCap, precipitation,
