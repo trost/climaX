@@ -262,6 +262,7 @@ def get_drought_stress_days(climate_data, soilVolume, availMoistCap, precipitati
         return stress_days_before, stress_days_after
 
     evaporation = get_evaporation(climate_data)
+    assert evaporation, "get_evaporation() returned no results"
     flowering_date = datestring2object(flowerDate)
 
     soil_water = get_soil_water(precipitation, evaporation, soilVolume,
