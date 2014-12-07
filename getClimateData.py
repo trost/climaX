@@ -301,24 +301,26 @@ def get_evaporation(climate_data):
         ms_to_mph = 2.23693629205
         return 0.376 * vpd * (windspeed * ms_to_mph) ** 0.76
 
-    # data format: [date, temperature, windspeed, relHumidity]
+    # data format: [datetime.datetime, temperature, windspeed, relHumidity]
     dates = [row[0].date() for row in climate_data]
-    windSpeeds = [row[2] for row in climate_data]
-    vpd = starmap(calc_VPD, [(row[1], row[3]/100.0) for row in climate_data])
-    dailyVPD = {date_: [] for date_ in set(dates)}
-    dailyWindSpeed = {date_: [] for date_ in dailyVPD}
-    for date_, vpd in zip(dates, vpd):
-        dailyVPD[date_].append(vpd)
-    for date_, windSpeed in zip(dates, windSpeeds):
-        dailyWindSpeed[date_].append(windSpeed)
+
+    daily_vpd = defaultdict(list) # VPD: Vapour Pressure Deficit
+    daily_windspeed = defaultdict(list)
+    for date_time, temperature, windspeed, humidity in climate_data:
+        day = date_time.date()
+        if temperature and humidity:
+            hourly_vpd = calc_VPD(temperature, humidity/100.0)
+            daily_vpd[day].append(hourly_vpd)
+        if windspeed:
+            daily_windspeed[day].append(windspeed)
 
     def mean(numbers):
         return sum(numbers) / float(len(numbers))
 
     # return daily PenmanEvaporation for daily means of vpd and windspeed
-    return {date_: PenmanEvaporation(mean(dailyVPD[date_]),
-                                     mean(dailyWindSpeed[date_]))
-            for date_ in dates}
+    return {day: PenmanEvaporation(mean(daily_vpd[day]),
+                                   mean(daily_windspeed[day]))
+            for day in dates}
 
 
 def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
