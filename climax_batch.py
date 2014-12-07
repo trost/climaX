@@ -27,29 +27,30 @@ def get_climate_data(parameter_line):
 
     Returns
     -------
-    temp_stress_days, drought_stress_days, light_intensity
+    culture_id, temp_stress_days, drought_stress_days, light_intensity
     """
     columns = parameter_line.split('\t')
     assert len(columns) == 4, "Line {0} in file {1} doesn't contain 4 columns"
     culture_id, date, soil_volume, field_capacity = parameter_line.split('\t')
-    return main(cursor, int(culture_id), date, float(soil_volume),
+    return culture_id, main(cursor, int(culture_id), date, float(soil_volume),
                 float(field_capacity))
 
 
 def format_climate_data(climate_data):
     """
-    formats climate data (temp_stress_days, drought_stress_days,
+    formats climate data (climate_id, irrigation, temp_stress_days, drought_stress_days,
     light_intensity) for tab-separated output.
     """
-    irrigation, temp_stress_days, drought_stress_days, light_intensity = climate_data
+    climate_id, (irrigation, temp_stress_days, drought_stress_days, light_intensity) = climate_data
     climate_str = (
-        '{drought_before}\t{drought_after}\t{control_drought_before}'
+        '{climate_id}\t{drought_before}\t{drought_after}\t{control_drought_before}'
         '\t{control_drought_after}\t{stress_drought_before}\t{stress_drought_after}'
          '\t{cold_before}\t{cold_after}\t{heat_before}\t{heat_after}'
          '\t{light_before}\t{light_after}\n')
     if irrigation:
         control_dsds, stress_dsds = drought_stress_days
         return climate_str.format(
+            climate_id=climate_id,
             drought_before='NA', drought_after='NA',
             control_drought_before=control_dsds[0],
             control_drought_after=control_dsds[1],
@@ -60,6 +61,7 @@ def format_climate_data(climate_data):
             light_before=light_intensity[0], light_after=light_intensity[1])
     else:
         return climate_str.format(
+            climate_id=climate_id,
             drought_before=drought_stress_days[0],
             drought_after=drought_stress_days[1],
             control_drought_before='NA', control_drought_after='NA',
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     cursor = database.cursor()
 
     args.output_file.write(
-        ('drought-before\tdrought-after\tcontrol-drought-before'
+        ('climate-id\tdrought-before\tdrought-after\tcontrol-drought-before'
          '\tcontrol-drought-after\tstress-drought-before\tstress-drought-after'
          '\tcold-before\tcold-after\theat-before\theat-after'
          '\tlight-before\tlight-after\n'))

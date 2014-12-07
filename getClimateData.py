@@ -405,6 +405,8 @@ def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
 
     Returns
     -------
+    has_irrigation : bool
+        True, iff irrigation data is available for this trial
     tempStressDays : 4-tuple of float
         sum of tempurature differences for (cold stress days before flowering,
         cold stress days after flowering, heat stress days before flowering,
