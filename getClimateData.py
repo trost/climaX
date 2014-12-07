@@ -289,6 +289,13 @@ def get_evaporation(climate_data):
         celsius (float), hourly windspeed in m/sec (float),
         hourly relative humidity in % (float)).
         WARNING: all hourly values might be missing (None)!
+
+    Returns
+    -------
+    daily_evaporation : dict, key=datetime.date, value=float
+        a dictionary mapping from a date to the day's evaporation in mm/day
+        WARNING: this dictionary contains only those dates, for which
+        evaporation data could be calculated!
     """
     def PenmanEvaporation(vpd, windspeed):
         """
@@ -318,9 +325,14 @@ def get_evaporation(climate_data):
         return sum(numbers) / float(len(numbers))
 
     # return daily PenmanEvaporation for daily means of vpd and windspeed
-    return {day: PenmanEvaporation(mean(daily_vpd[day]),
-                                   mean(daily_windspeed[day]))
-            for day in dates}
+    daily_evaporation = {}
+    for day in dates:
+        # we can only calculate evaporation if VPD and windspeed are available
+        if day in daily_vpd and day in daily_windspeed:
+            daily_evaporation[day] = \
+                PenmanEvaporation(mean(daily_vpd[day]),
+                                  mean(daily_windspeed[day]))
+    return daily_evaporation
 
 
 def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
