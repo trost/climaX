@@ -124,11 +124,14 @@ def get_light_intensity(rawData, flowerDate='2012-07-01'):
     return sum(L1) / len(L1), sum(L2) / len(L2)
 
 
-def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
+def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoistCap,
                irrigation=dict()):
     """
     Parameters
     ----------
+    trial_dates : list of datetime.date
+        a list of dates beginning with the first date of the
+        trial and including the last date of the trial
     precipitation : dict, key = datatime.date, value = float
         ???
     evaporation
@@ -158,12 +161,10 @@ def get_soil_water(precipitation, evaporation, soilVolume, availMoistCap,
             return 0.0
 
     treatments = ('control', 'stress')
-    dates = sorted(evaporation)
-    assert are_consecutive(dates), "Evaporation dates aren't consecutive."
     soil_water = defaultdict(lambda : defaultdict(float))
 
-    initial_days = set(dates[:14])
-    for day in dates:
+    initial_days = set(trial_dates[:14])
+    for day in trial_dates:
         # Initial 14 days (0-13) ... sum up water gain up to soil capacity
         if day in initial_days:
             if day in irrigation:
@@ -263,7 +264,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
     return tuple(sum(dates) for dates in (cold_before, cold_after, heat_before, heat_after))
 
 
-def get_drought_stress_days(climate_data, soilVolume, availMoistCap, precipitation,
+def get_drought_stress_days(trial_dates, climate_data, soilVolume, availMoistCap, precipitation,
                         irrigation, stressThreshold=10.0,
                         flowerDate='2012-07-01'):
     """
@@ -272,6 +273,9 @@ def get_drought_stress_days(climate_data, soilVolume, availMoistCap, precipitati
 
     Parameters
     ----------
+    trial_dates : list of datetime.date
+        a list of dates beginning with the first date of the
+        trial and including the last date of the trial
     climate_data : list of (datetime.datetime, float, float, float) tuples
         a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
         celsius (float), hourly windspeed in m/sec (float),
@@ -313,7 +317,7 @@ def get_drought_stress_days(climate_data, soilVolume, availMoistCap, precipitati
     assert evaporation, "get_evaporation() returned no results"
     flowering_date = datestring2object(flowerDate)
 
-    soil_water = get_soil_water(precipitation, evaporation, soilVolume,
+    soil_water = get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
                                 availMoistCap, irrigation)
     if irrigation:
         control = {date: soil_water[date]['control'] for date in soil_water}
@@ -383,14 +387,14 @@ def get_evaporation(climate_data):
     return daily_evaporation
 
 
-def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
+def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
          availMoistCap=0.14):
     """
     Parameters
     ----------
     cursor : MySQLdb.cursors.Cursor
         cursor to the MySQL database
-    cultureID : int
+    culture_id : int
         ID of the culture, e.g. 56878
     floweringDate : string
         ??? date string in YYYY-MM-DD format, e.g. '2012-07-01'
@@ -413,26 +417,28 @@ def main(cursor, cultureID=56878, floweringDate='2012-07-01', soilVolume=42,
         light intensity (before flowering, after flowering),
         e.g. (59630.84567157448, 49066.49380313513)
     """
-    cursor.execute(PREC_QUERY % {'CULTURE_ID': cultureID})
+    cursor.execute(PREC_QUERY % {'CULTURE_ID': culture_id})
     precipitation = {date: precip for (date, precip) in cursor.fetchall()}
 
-    cursor.execute(IRRI_QUERY % {'CULTURE_ID': cultureID})
+    cursor.execute(IRRI_QUERY % {'CULTURE_ID': culture_id})
     irrigation = defaultdict(list)
     # for some days, there are two rows (stress vs. control)
     for date, irri_amount, treatment_id in cursor.fetchall():
         irrigation[date].append( (irri_amount, treatment_id) )
 
-    cursor.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': cultureID})
+    cursor.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': culture_id})
     climateData = [row for row in cursor.fetchall()]
+
+    trial_dates = get_trial_daterange(culture_id, cursor)
 
     tempStressDays = \
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
-        get_drought_stress_days(climateData, soilVolume, availMoistCap,
+        get_drought_stress_days(trial_dates, climateData, soilVolume, availMoistCap,
                             precipitation, irrigation, stressThreshold=10.0,
                             flowerDate=floweringDate)
 
-    cursor.execute(DAYLIGHT_QUERY % {'CULTURE_ID': cultureID})
+    cursor.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
     lightData = [row for row in cursor.fetchall()]
     lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
     has_irrigation = True if irrigation else False
