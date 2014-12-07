@@ -7,12 +7,60 @@ from collections import defaultdict
 import argparse
 
 from vpd_heatsum import calc_VPD
-from queries import PREC_QUERY, IRRI_QUERY, FAST_CLIMATE_QUERY, DAYLIGHT_QUERY
+from queries import (TRIAL_DATES_QUERY, PREC_QUERY, IRRI_QUERY,
+                     FAST_CLIMATE_QUERY, DAYLIGHT_QUERY)
 import login  # TODO: get the real login module from Christian, this is fake
 
 # treatment IDs
 CONTROL = 169
 STRESS = 170
+
+
+def get_trial_daterange(culture_id, db_cursor):
+    """
+    given a culture ID, returns a list of dates
+    beginning with the first date of the
+    trial and including the last date of the trial.
+
+    Parameters
+    ----------
+    culture_id : int
+        the culture ID of a trial
+    db_cursor : MySQLdb.cursors.Cursor
+        a cursor to the (running) database
+
+    Returns
+    -------
+    trial_dates : list of datetime.date
+        a list of dates beginning with the first date of the
+        trial and including the last date of the trial
+    """
+    db_cursor.execute(TRIAL_DATES_QUERY % {'CULTURE_ID': culture_id})
+    start_date, end_date = db_cursor.fetchone()
+    return list(generate_daterange(start_date, end_date, include_end_date=True))
+
+
+def generate_daterange(start, end, include_end_date=True):
+    """
+    Parameters
+    ----------
+    start : datetime.date
+        start date
+    end : datetime.date
+        end date
+
+    Yields
+    ------
+    dates : generator of datetime.date
+     Generates all the dates from start to end. The start date is always included.
+     If include_end_date is True, this will include the end date (default).
+    """
+    current = start
+    break_condition = 'current <= end' if include_end_date else 'current < end'
+    while eval(break_condition):
+        yield current
+        current += datetime.timedelta(days=1)
+
 
 def are_consecutive(dates):
     """

@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+TRIAL_DATES_QUERY = """
+select
+C.planted + interval 14 day,
+C.terminated
+from cultures C
+where C.id = %(CULTURE_ID)i;
+""".strip().replace('\n', ' ')
+# returns one row with two columns: trial start date (YYYY-MM-DD),
+# trial end date (YYYY-MM-DD)
+
+
 PREC_QUERY = """
 SELECT
 DATE(P.datum),
