@@ -264,7 +264,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
     return tuple(sum(dates) for dates in (cold_before, cold_after, heat_before, heat_after))
 
 
-def get_drought_stress_days(trial_dates, climate_data, soilVolume, availMoistCap, precipitation,
+def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume, availMoistCap, precipitation,
                         irrigation, stressThreshold=10.0,
                         flowerDate='2012-07-01'):
     """
@@ -273,6 +273,8 @@ def get_drought_stress_days(trial_dates, climate_data, soilVolume, availMoistCap
 
     Parameters
     ----------
+    culture_id : int
+		culture ID of the trial
     trial_dates : list of datetime.date
         a list of dates beginning with the first date of the
         trial and including the last date of the trial
@@ -319,7 +321,9 @@ def get_drought_stress_days(trial_dates, climate_data, soilVolume, availMoistCap
 
     soil_water = get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
                                 availMoistCap, irrigation)
-    if irrigation:
+
+    # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
+    if irrigation and culture_id not in (47109, 56879):
         control = {date: soil_water[date]['control'] for date in soil_water}
         stress = {date: soil_water[date]['stress'] for date in soil_water}
         return stress_days(control, flowering_date, stressThreshold), \
@@ -436,7 +440,7 @@ def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
     tempStressDays = \
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
-        get_drought_stress_days(trial_dates, climateData, soilVolume, availMoistCap,
+        get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume, availMoistCap,
                             precipitation, irrigation, stressThreshold=10.0,
                             flowerDate=floweringDate)
 

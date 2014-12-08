@@ -47,7 +47,9 @@ def format_climate_data(climate_data):
         '\t{control_drought_after}\t{stress_drought_before}\t{stress_drought_after}'
          '\t{cold_before}\t{cold_after}\t{heat_before}\t{heat_after}'
          '\t{light_before}\t{light_after}\n')
-    if irrigation:
+
+    # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
+    if irrigation and culture_id not in (47109, 56879):
         control_dsds, stress_dsds = drought_stress_days
         return climate_str.format(
             climate_id=climate_id,
