@@ -14,7 +14,7 @@ import os
 import MySQLdb
 import yaml
 
-CONFIG_FILE = open('login.yaml', 'r')
+CONFIG_FILE = open(os.path.expanduser('~/.climax.yaml'), 'r')
 CONFIG = yaml.load(CONFIG_FILE)
 
 def get_db(host=CONFIG['host'], user=CONFIG['user'],
