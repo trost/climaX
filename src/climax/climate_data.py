@@ -9,7 +9,9 @@ import argparse
 from vpd_heatsum import calc_VPD
 from queries import (TRIAL_DATES_QUERY, PREC_QUERY, IRRI_QUERY,
                      FAST_CLIMATE_QUERY, DAYLIGHT_QUERY)
-import login  # TODO: get the real login module from Christian, this is fake
+import login
+
+CONNECTED_TO_DB = False
 
 # treatment IDs
 CONTROL = 169
@@ -77,6 +79,7 @@ def are_consecutive(dates):
     else:
         return False
 
+
 def treatment_type(treatment_id):
     """
     converts a control/stress treatment ID to the string 'control' or
@@ -88,6 +91,7 @@ def treatment_type(treatment_id):
         return 'stress'
     else:
         raise ValueError('Unexpected treatment ID: {}'.format(treatment_id))
+
 
 def datestring2object(datestring):
     """
@@ -387,13 +391,14 @@ def get_evaporation(climate_data):
     return daily_evaporation
 
 
-def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
-         availMoistCap=0.14):
+def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
+                     soilVolume=42, availMoistCap=0.14):
     """
+    extract climate data (temperature stress days, drought stress days and
+    light intensity) from the database.
+
     Parameters
     ----------
-    cursor : MySQLdb.cursors.Cursor
-        cursor to the MySQL database
     culture_id : int
         ID of the culture, e.g. 56878
     floweringDate : string
@@ -419,19 +424,26 @@ def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
         light intensity (before flowering, after flowering),
         e.g. (59630.84567157448, 49066.49380313513)
     """
-    cursor.execute(PREC_QUERY % {'CULTURE_ID': culture_id})
-    precipitation = {date: precip for (date, precip) in cursor.fetchall()}
+    if not CONNECTED_TO_DB:
+        database = login.get_db()
+        global CURSOR
+        CURSOR = database.cursor()
+        global CONNECTED_TO_DB
+        CONNECTED_TO_DB = True
 
-    cursor.execute(IRRI_QUERY % {'CULTURE_ID': culture_id})
+    CURSOR.execute(PREC_QUERY % {'CULTURE_ID': culture_id})
+    precipitation = {date: precip for (date, precip) in CURSOR.fetchall()}
+
+    CURSOR.execute(IRRI_QUERY % {'CULTURE_ID': culture_id})
     irrigation = defaultdict(list)
     # for some days, there are two rows (stress vs. control)
-    for date, irri_amount, treatment_id in cursor.fetchall():
+    for date, irri_amount, treatment_id in CURSOR.fetchall():
         irrigation[date].append( (irri_amount, treatment_id) )
 
-    cursor.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': culture_id})
-    climateData = [row for row in cursor.fetchall()]
+    CURSOR.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': culture_id})
+    climateData = [row for row in CURSOR.fetchall()]
 
-    trial_dates = get_trial_daterange(culture_id, cursor)
+    trial_dates = get_trial_daterange(culture_id, CURSOR)
 
     tempStressDays = \
         get_temp_stress_days(climateData, flowerDate=floweringDate)
@@ -440,17 +452,15 @@ def main(cursor, culture_id=56878, floweringDate='2012-07-01', soilVolume=42,
                             precipitation, irrigation, stressThreshold=10.0,
                             flowerDate=floweringDate)
 
-    cursor.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
-    lightData = [row for row in cursor.fetchall()]
+    CURSOR.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
+    lightData = [row for row in CURSOR.fetchall()]
     lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
     has_irrigation = True if irrigation else False
     return has_irrigation, tempStressDays, droughtStressDays, lightIntensity
 
 
-if __name__ == '__main__':
-    database = login.get_db()
-    cursor = database.cursor()
-
+def main(args=None):
+    """calls get_climate_data with arguments from the command line."""
     parser = argparse.ArgumentParser()
     parser.add_argument('culture_id', type=int,
                         help='ID of the culture, e.g. 56878')
@@ -460,10 +470,13 @@ if __name__ == '__main__':
                         help='soil volume, e.g. 42 or 27.5')
     parser.add_argument('available_moist_cap', type=float,
                         help='moisture capacity, e.g. 0.14')
-    args = parser.parse_args(sys.argv[1:])
+    if args:
+        args = parser.parse_args(args)
+    else:
+        args = parser.parse_args(sys.argv[1:])
 
     irrigation, tempStressDays, droughtStressDays, lightIntensity = \
-        main(cursor, args.culture_id, args.flowering_date, args.soil_volume,
+        main(args.culture_id, args.flowering_date, args.soil_volume,
              args.available_moist_cap)
 
     print 'irrigation:', irrigation
@@ -476,3 +489,7 @@ if __name__ == '__main__':
     else:
         print 'drought stress days:', droughtStressDays
     print 'light intensity:', lightIntensity
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
