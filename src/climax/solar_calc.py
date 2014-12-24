@@ -10,6 +10,21 @@ Not doing it on purpose.. I'm just tired of clicking through the GUI :/
 
 For references, formulas etc, see
 http://www.ars.usda.gov/services/software/download.htm?softwareid=62
+
+purpose: estimating hourly incoming solar radiation from limited
+         meteorological data
+
+model parameters:
+ * latitude
+ * longitude
+ * elevation of the field site
+ * daily precipitation (mm)
+ * daily minimum and maximum air temperatures (degrees C).
+
+input weather file:
+ * csv file with four columns
+ * DOY (day of year), MIN (air temperature), MAX (air temperature),
+   PREC (total daily rainfall)
 """
 
 import sys
