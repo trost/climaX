@@ -16,6 +16,7 @@ import sys
 import math
 import csv
 import datetime
+import argparse
 
 __author__ = 'Christian Schudoma'
 __copyright__ = 'Copyright 2014, Christian Schudoma'
@@ -59,7 +60,22 @@ def zenith(latitude, solarDecl, t, solarNoon):
     return math.acos(temp)
 
 
-def main(argv):
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('climate_file',
+                        help='CSV climate file???')
+    parser.add_argument('latitude', type=float,
+                        help='latitude')
+    parser.add_argument('longitude', type=float,
+                        help='longitude')
+    parser.add_argument('elevation', type=float,
+                        help='elevation in meters')
+    parser.add_argument('year', type=int,
+                        help='year (YYYY)')
+    if argv:
+        args = parser.parse_args(argv)
+    else:
+        args = parser.parse_args(sys.argv[1:])
 
     #~ Fd = 1.0 # unused variable
     #~ Fp = 0.0 # unused variable
@@ -68,22 +84,16 @@ def main(argv):
 
     out = sys.stdout
 
-    try:
-        latitude, longitude, elevation, year \
-            = map(float, argv[1:4]) + [int(argv[4])]
-        cliReader = csv.reader(open(argv[0]), delimiter=',', quotechar='"')
-        stationID = argv[0][:4]
-    except:
-        sys.stderr.write(('Expecting <climate file> latitude longitude '
-                          'elevation[m], year[YYYY]!\n'))
-        sys.exit(1)
+    cliReader = csv.reader(open(args.climate_file), delimiter=',',
+                           quotechar='"')
+    stationID = argv[0][:4]
 
-    latitude *= math.pi / 180.0
-    longitude *= math.pi / 180.0
-    LC = longitude / (360.0 * 24.0)
+    args.latitude *= math.pi / 180.0
+    args.longitude *= math.pi / 180.0
+    LC = args.longitude / (360.0 * 24.0)
 
     maxDays = 365
-    if (year % 4 == 0) and (((year % 100) != 0) or ((year % 400) == 0)):
+    if (args.year % 4 == 0) and (((args.year % 100) != 0) or ((args.year % 400) == 0)):
         maxDays = 366
 
     days = {}
@@ -100,8 +110,8 @@ def main(argv):
         ET = getET(day)
         solarNoon = 12.0 - LC - ET
         solarDecl = solarDeclination(day)
-        # zenithAngle = zenith(latitude, solarDecl, time, solarNoon)
-        halfDayLength = calcHalfDayLength(solarDecl, latitude)
+        # zenithAngle = zenith(args.latitude, solarDecl, time, solarNoon)
+        halfDayLength = calcHalfDayLength(solarDecl, args.latitude)
         sunrise = solarNoon - halfDayLength
         sunset = solarNoon + halfDayLength
 
@@ -123,17 +133,17 @@ def main(argv):
 
         # at non-polar coordinates, tao value is lower
         # with daily air temperature differences lower than 10
-        if abs(latitude / math.pi * 180.0) < 60.0:
+        if abs(args.latitude / math.pi * 180.0) < 60.0:
             deltaT = tmax - tmin
             if deltaT <= 10.0 and deltaT != 0.0:
                 tao /= (11.0 - deltaT)
         #~ airTemp = (tmax + tmin) / 2.0 # unused variable
-        Pa = 101.0 * math.exp(-1.0 * elevation / 8200.)
+        Pa = 101.0 * math.exp(-1.0 * args.elevation / 8200.)
         # unused variable
         #~ La =  5.67e-08 * math.pow((airTemp + 273.16), 4.0)
 
         for t in xrange(24):
-            zenithAngle = zenith(latitude, solarDecl, t, solarNoon)
+            zenithAngle = zenith(args.latitude, solarDecl, t, solarNoon)
             temp = zenithAngle
             m = Pa / 101.3 / math.cos(temp)
 
@@ -167,7 +177,7 @@ def main(argv):
             #~ Rabs = (1.0 - albedo) * (Fp * Sp + Fd * Sd) + 0.05 * La
 
             # print t
-            dateObj = datetime.datetime.strptime('%03i %i %i' % (day, year, t),
+            dateObj = datetime.datetime.strptime('%03i %i %i' % (day, args.year, t),
                                                  '%j %Y %H')
 
             ## current output goes directly into SQL format
