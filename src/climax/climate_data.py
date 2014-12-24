@@ -476,8 +476,8 @@ def main(args=None):
         args = parser.parse_args(sys.argv[1:])
 
     irrigation, tempStressDays, droughtStressDays, lightIntensity = \
-        main(args.culture_id, args.flowering_date, args.soil_volume,
-             args.available_moist_cap)
+        get_climate_data(args.culture_id, args.flowering_date,
+                         args.soil_volume, args.available_moist_cap)
 
     print 'irrigation:', irrigation
     print 'temperature stress days:', tempStressDays
