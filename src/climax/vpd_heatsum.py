@@ -36,12 +36,15 @@ def readClimateData_DWDXML(fn, start_date='2011-04-11', end_date='2011-09-02',
                   datetime.datetime.strptime(end_date, '%Y-%m-%d').date())
     station_data = {}
     raw = open(fn).read()
+    
+    # Why bother using an XML parser, if you still have to use regex? // AN
     # remove spaces between tags... (BSS-requirement!)
     raw = re.sub('> [ ]+<', '><', raw.replace('\n', ''))
     soup = BSS(raw)
     soup_data = soup.data
     station = soup_data.stationname
 
+    # I'm not sure what C. is trying to achieve with all this while True crap // AN
     while True:
         if station is None:
             break
@@ -54,7 +57,10 @@ def readClimateData_DWDXML(fn, start_date='2011-04-11', end_date='2011-09-02',
         while True:
             if datapoint is None:
                 break
-            v_value = float(datapoint.text)
+            try: # sometimes the text a <v> is empty
+                v_value = float(datapoint.text)
+            except:
+                break
 
             date_, time_ = str(datapoint.get('date')), None
             if 'T' in date_:
