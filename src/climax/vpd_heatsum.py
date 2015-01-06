@@ -1,81 +1,91 @@
 #!/usr/bin/env python
+
 '''
-Script to compute weekly midday vapour pressure deficit (VPD) values
+This module computes weekly midday vapour pressure deficit (VPD) values
 and thermal time from DWD (German Weather Service - http://www.dwd.de)
 XML data
 '''
+
 import sys
 import os
 import re
 import math
 import datetime
+from collections import defaultdict
 
 import numpy as np
-from bs4 import BeautifulStoneSoup as BSS
+from lxml import etree
+
 
 __author__ = 'Christian Schudoma'
 __copyright__ = 'Copyright 2013-2014, Christian Schudoma'
 __license__ = 'MIT'
-__version__ = '0.1a'
-__maintainer__ = 'Christian Schudoma'
-__email__ = 'cschu@darkjade.net'
+__maintainer__ = 'Arne Neumann'
 
 
-def readClimateData_DWDXML(fn, start_date='2011-04-11', end_date='2011-09-02',
+def trost2date(trost_date):
+    """converts a 'YYYY-MM-DD' date string into a datetime.date instance"""
+    year, month, day = (int(val) for val in trost_date.split('-'))
+    return datetime.date(year, month, day)
+
+
+def date2trost(datetime_date):
+    """converts a datetime.date instance into a 'YYYY-MM-DD' date string"""
+    # '0>2' means: add leading zero(s) if the int is less than two digits long
+    return '{0}-{1:0>2}-{2:0>2}'.format(datetime_date.year, datetime_date.month, datetime_date.day)
+
+
+def read_dwd_climate_data(climate_file, start_date='2011-04-11',
+                           end_date='2011-09-02',
                            use_datetime=True):
     """
     Reads DWD Climate Data (tested on hourly temperatures, hourly rel.
-    humidities) in the interval of
-    (start_date (YYYY-MM-DD), end_date (YYYY-MM-DD)) from a DWD XML file
-    containing data from a single weather station.
+    humidities) in the interval of (start_date (YYYY-MM-DD),
+    end_date (YYYY-MM-DD)) from a DWD XML file containing data from a single
+    weather station.
 
-    WARNING: Don't try this on multi-station files or non-continuous intervals
-    without modification!
+    This is a rewrite of C.'s readClimateData_DWDXML function, which
+    used BeautifulSoup and some weird while True constructs.
+
+    Parameters
+    ----------
+    fn : str
+        file name of a DWD XML climate file
+    start_date : str
+        start date in YYYY-MM-DD format
+    end_date : str
+        end date in YYYY-MM-DD format
+    use_datetime : bool
+        If True, adds HH:mm:ss to output
+
+    Returns
+    -------
+    station_data : dict
+        If use_datetime is True, returns a dictionary mapping from
+        (date, time) tuples to a list of (exactly one)
+        float. date is given as a 'YYYY-MM-DD' string, time as 'HH:mm:ss'.
+        If use_datetime is True, returns a dictionary mapping from a
+        'YYYY-MM-DD' date string to a list of floats (one for each point
+        in time when data was measured on that date).
     """
-    start, end = (datetime.datetime.strptime(start_date, '%Y-%m-%d').date(),
-                  datetime.datetime.strptime(end_date, '%Y-%m-%d').date())
-    station_data = {}
-    raw = open(fn).read()
-    
-    # Why bother using an XML parser, if you still have to use regex? // AN
-    # remove spaces between tags... (BSS-requirement!)
-    raw = re.sub('> [ ]+<', '><', raw.replace('\n', ''))
-    soup = BSS(raw)
-    soup_data = soup.data
-    station = soup_data.stationname
+    start, end = trost2date(start_date), trost2date(end_date)
+    station_data = defaultdict(list)
 
-    # I'm not sure what C. is trying to achieve with all this while True crap // AN
-    while True:
-        if station is None:
-            break
-        #~ station_name = station.get('value') # unused variable
-        # For debugging:
-        #if station_name.strip() != 'Fassberg':
-        #   station = station.nextSibling
-        #   continue
-        datapoint = station.v
-        while True:
-            if datapoint is None:
-                break
-            try: # sometimes the text a <v> is empty
-                v_value = float(datapoint.text)
-            except:
-                break
-
-            date_, time_ = str(datapoint.get('date')), None
-            if 'T' in date_:
-                date_, time_ = [value.strip('Z') for value in date_.split('T')]
-            day = datetime.datetime.strptime(date_, '%Y-%m-%d').date()
+    tree = etree.parse(climate_file)
+    stations = list(tree.iterfind('{http://www.unidart.eu/xsd}stationname'))
+    assert len(stations) == 1, "Can't handle multi-station file '{}'".format(dwd_file)
+    for station in stations:
+        for datapoint in station.iterchildren():
+            point_of_time = datetime.datetime.strptime(datapoint.attrib['date'],
+                                                       "%Y-%m-%dT%H:%M:%SZ")
+            value = float(datapoint.text)
+            day = point_of_time.date()
             if day >= start and day <= end:
                 if use_datetime:
-                    key = (date_, time_)
+                    key = (date2trost(day), point_of_time.time().isoformat())
                 else:
-                    key = date_
-                station_data[key] = station_data.get(key, []) + [v_value]
-            datapoint = datapoint.nextSibling
-
-        station = station.nextSibling
-        pass
+                    key = date2trost(day)
+                station_data[key].append(value)
     return station_data
 
 
@@ -181,8 +191,8 @@ def main(argv):
     fn_Temperatures, fn_RelHumidities = argv[0], argv[1]
     startd, endd = argv[2].split(',')
     fout = argv[3]
-    rawTemperatures = readClimateData_DWDXML(fn_Temperatures)
-    rawRelHumidities = readClimateData_DWDXML(fn_RelHumidities)
+    rawTemperatures = read_dwd_climate_data(fn_Temperatures, start_date=startd, end_date=endd)
+    rawRelHumidities = read_dwd_climate_data(fn_RelHumidities, start_date=startd, end_date=endd)
 
     # convert %-values from DWD to fractional values
     for k in rawRelHumidities:
