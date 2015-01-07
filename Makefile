@@ -16,7 +16,7 @@ uninstall:
 
 clean:
 	find . -name '*.pyc' -delete
-	rm -rf build dist climaX.egg-info __pycache__
+	rm -rf build dist src/climaX.egg-info __pycache__
 
 reinstall: clean uninstall install
 

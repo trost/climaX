@@ -2,10 +2,7 @@
 
 import sys
 import os
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
@@ -17,8 +14,15 @@ setup(name='climaX',
       author='Christian Schudoma',
       author_email='',
       url='https://github.com/arne-cl/climaX',
-      py_modules=['getClimateData', 'vpd_heatsum', 'queries', 'login'],
-      scripts=['getClimateData.py', 'climax_batch.py'],
+      packages=find_packages("src"),
+      package_dir = {'': "src"},include_package_data=True,
+      zip_safe=False,
+      entry_points={
+        'console_scripts':
+          ['getClimateData=climax.climate_data:main']
+      },
+#      py_modules=['getClimateData', 'vpd_heatsum', 'queries', 'login'],
+#      scripts=['getClimateData.py', 'climax_batch.py'],
       license='MIT License',
       install_requires=['mysql-python', 'pyyaml', 'BeautifulSoup4'],
      )
