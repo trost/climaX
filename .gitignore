@@ -58,3 +58,9 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+
+test/47109.tsv
+test/results_all_trials.tsv
+test/results_all_trials2.tsv
+test/results_all_trials3.tsv
+.gitignore
