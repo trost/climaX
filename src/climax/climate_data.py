@@ -14,7 +14,7 @@ import login
 CONNECTED_TO_DB = False
 
 # treatment IDs
-CONTROL = 169
+CONTROL = (169, 171)
 STRESS = 170
 
 
@@ -85,7 +85,7 @@ def treatment_type(treatment_id):
     converts a control/stress treatment ID to the string 'control' or
     'stress' respectively
     """
-    if treatment_id == CONTROL:
+    if treatment_id in CONTROL:
         return 'control'
     elif treatment_id == STRESS:
         return 'stress'
