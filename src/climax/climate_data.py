@@ -186,7 +186,7 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoi
                 for treatment in treatments:
                     soil_water[day][treatment] = current_soil_water
 
-        # From day 14 on calculate net water = soil_water from day before +
+        # From day 14 on calculate net water = soil_water from day before minus
         # evaporation loss + water gain
         else:
             if day in irrigation:
@@ -195,14 +195,14 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoi
                     evaporationLoss = evaporation.get(day, 0.0)
                     waterGain = precipitation.get(day, 0.0) + irri_amount
                     yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
-                    netWater = yesterdays_soil_water + evaporationLoss + waterGain
+                    netWater = yesterdays_soil_water - evaporationLoss + waterGain
                     current_soil_water = max(min(netWater, soilVolume), 0)
                     soil_water[day][treatment] = current_soil_water
             else:  # no irrigation
                 evaporationLoss = evaporation.get(day, 0.0)
                 waterGain = precipitation.get(day, 0.0)
                 yesterdays_soil_water = yesterdays_soil_value(soil_water, day, 'control')
-                netWater = yesterdays_soil_water + evaporationLoss + waterGain
+                netWater = yesterdays_soil_water - evaporationLoss + waterGain
                 current_soil_water = max(min(netWater, soilVolume), 0)
                 # add values to both irrigation treatments
                 for treatment in treatments:
