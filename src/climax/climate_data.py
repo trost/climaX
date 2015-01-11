@@ -157,6 +157,27 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoi
         (on the given day and with the given treatment).
     """
     def yesterdays_soil_value(soil_water, day, treatment):
+        """
+        given a day, returns the soil water value of the previous day for
+        a given treatment.
+
+        Parameters
+        ----------
+        soil_water : defaultdict of defaultdict(float)
+            maps from a datetime.date to a dict two one or two treatments
+            ('control' and 'stress'). a treatment maps to the soil water
+            content (on the given day and with the given treatment).
+        day : datetime.date
+            a day during the field trial
+        treatment : str
+            'control' or 'stress'
+
+        Returns
+        -------
+        soil_value : float
+            soil water value of the previous day under the given treatment,
+            defaults to 0.0
+        """
         yesterday = datetime.date.fromordinal(day.toordinal()-1)
         if yesterday in soil_water:
             return soil_water[yesterday].get(treatment, 0.0)
