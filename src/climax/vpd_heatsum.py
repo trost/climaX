@@ -89,30 +89,44 @@ def read_dwd_climate_data(climate_file, start_date='2011-04-11',
     return station_data
 
 
-def calc_VPD(T_Celsius, relHumidity):
+def calc_VPD(t_celsius, rel_humidity):
     """
-    Different methods for calculating Vapour Pressure Deficit (VPD)
-    from temperature and relative humidity values.
-    Returns VPD, calculated according to Licor LI-6400 manual
-    """
-    #~ T = T_Celsius + 273.15 # T_Kelvin  # unused variable
-    #~ PSI_IN_KPA = 6.8948 # unused variable
+    calculates the Vapour Pressure Deficit (VPD) from temperature (degrees
+    celsius) and relative humidity values. We'll use the algorithm given
+    in the Licor LI-6400 manual for calculating VPD.
 
-    # according to http://en.wikipedia.org/wiki/Vapour_Pressure_Deficit
-    # A, B, C, D, E, F = -1.88e4, -13.1, -1.5e-2, 8e-7, -1.69e-11, 6.456
-    # vp_sat = math.exp(A / T + B + C * T + D * T ** 2 + E * T ** 3 + F * math.log(T))
-    # according to http://ohioline.osu.edu/aex-fact/0804.html
-    # A, B, C, D, E, F = -1.044e4, -1.129e1, -2.702e-2, 1.289e-5, -2.478e-9, 6.456
-    # vp_sat = math.exp(A / T + B + C * T + D * T ** 2 + E * T ** 3 + F * math.log(T)) * PSI_IN_KPA
-    # according to
-    # http://physics.stackexchange.com/questions/4343/how-can-i-calculate-vapor-pressure-deficit-from-temperature-and-relative-humidit
-    # vp_sat = 6.11 * math.exp((2.5e6 / 461) * (1 / 273 - 1 / (273 + T)))
+    Parameters
+    ----------
+    t_celsius : float
+        temperature in degrees celsius
+    rel_humidity : float
+        relative humidity (represented as a fraction between 0.0 and 1.0)
+
+    Returns
+    -------
+    vpd : float
+        Vapour Pressure Deficit
+
+    Other algorithms to calculate VPD include:
+
+        A, B, C, D, E, F = -1.88e4, -13.1, -1.5e-2, 8e-7, -1.69e-11, 6.456
+        vp_sat = math.exp(A / T + B + C * T + D * T ** 2 + E * T ** 3 + F * math.log(T))
+        Source: http://en.wikipedia.org/wiki/Vapour_Pressure_Deficit
+
+        A, B, C, D, E, F = -1.044e4, -1.129e1, -2.702e-2, 1.289e-5, -2.478e-9, 6.456
+        vp_sat = math.exp(A / T + B + C * T + D * T ** 2 + E * T ** 3 + F * math.log(T)) * PSI_IN_KPA
+        Source: http://ohioline.osu.edu/aex-fact/0804.html
+
+        vp_sat = 6.11 * math.exp((2.5e6 / 461) * (1 / 273 - 1 / (273 + T)))
+        Source: http://physics.stackexchange.com/questions/4343
+    """
     # according to Licor LI-6400 manual pg 14-10
-    # and Buck AL (1981) New equations for computing vapor pressure and enhancement factor. J Appl Meteor 20:1527-1532
-    vp_sat = 0.61365 * math.exp((17.502 * T_Celsius) / (240.97 + T_Celsius))
+    # and Buck AL (1981). New equations for computing vapor pressure and
+    # enhancement factor. J Appl Meteor 20:1527-1532
+    vp_sat = 0.61365 * math.exp((17.502 * t_celsius) / (240.97 + t_celsius))
 
-    vp_air = vp_sat * relHumidity
-    return vp_sat - vp_air  # or vp_sat * (1 - relHumidity)
+    vp_air = vp_sat * rel_humidity
+    return vp_sat - vp_air  # or vp_sat * (1 - rel_humidity)
 
 
 def compute_weekly_midday_vpd(temperatures, relHumidity):
