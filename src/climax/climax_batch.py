@@ -13,14 +13,16 @@ import sys
 import argparse
 import traceback
 
-from getClimateData import main
+from climate_data import get_climate_data
 import login
 
 
-def get_climate_data(parameter_line):
+def get_climate_data_from_str(cursor, parameter_line):
     """
     Parameters
     ----------
+    cursor : MySQLdb.cursors.Cursor
+        a cursor to the (running) database
     parameter_line : str
         one line from a tab-separated file containing culture_id,
         flowering date, soil volume and field capacity
@@ -29,11 +31,17 @@ def get_climate_data(parameter_line):
     -------
     culture_id, temp_stress_days, drought_stress_days, light_intensity
     """
+    global CURSOR
+    CURSOR = cursor
+    global CONNECTED_TO_DB
+    CONNECTED_TO_DB = False
+
     columns = parameter_line.split('\t')
     assert len(columns) == 4, "Line {0} in file {1} doesn't contain 4 columns"
     culture_id, date, soil_volume, field_capacity = parameter_line.split('\t')
-    return int(culture_id), main(cursor, int(culture_id), date, float(soil_volume),
-                float(field_capacity))
+    return int(culture_id), get_climate_data(int(culture_id), date,
+                                             float(soil_volume),
+                                             float(field_capacity))
 
 
 def format_climate_data(climate_data):
@@ -73,7 +81,8 @@ def format_climate_data(climate_data):
             light_before=light_intensity[0], light_after=light_intensity[1])
 
 
-if __name__ == '__main__':
+def main(args=None):
+    """calls get_climate_data with arguments from the command line."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'input_file', type=argparse.FileType('r'),
@@ -104,8 +113,12 @@ if __name__ == '__main__':
 
     for i, line in enumerate(args.input_file, 1):
         try:
-            climate_data = get_climate_data(line)
+            climate_data = get_climate_data_from_str(cursor, line)
             args.output_file.write(format_climate_data(climate_data))
         except Exception as e:
             sys.stderr.write('line {} in file {} caused trouble: {}'.format(i, args.input_file.name, line))
             sys.stderr.write(traceback.format_exc())
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

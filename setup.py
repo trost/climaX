@@ -19,7 +19,8 @@ setup(name='climaX',
       zip_safe=False,
       entry_points={
         'console_scripts':
-          ['getClimateData=climax.climate_data:main']
+          ['getClimateData=climax.climate_data:main',
+           'climax_batch=climax.climax_batch:main']
       },
 #      py_modules=['getClimateData', 'vpd_heatsum', 'queries', 'login'],
 #      scripts=['getClimateData.py', 'climax_batch.py'],
