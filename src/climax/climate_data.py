@@ -241,6 +241,99 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
     return soil_water
 
 
+def get_shelter_soil_water(trial_dates, precipitation, evaporation, soilVolume,
+                           availMoistCap, irrigation=dict()):
+    """
+    deadline-orientied, hotfix workaround function for a single trial location
+    with a non-movable shelter. This function should be merged with
+    get_soil_water() as soon as possible.
+
+    calculates the soil water values for all days of a trial and both 'control'
+    and 'stress' treatment.
+
+    Parameters
+    ----------
+    trial_dates : list of datetime.date
+        a list of dates beginning with the first date of the
+        trial and including the last date of the trial
+    precipitation : dict, key = datatime.date, value = float
+        amount of precipitation on a given day
+    evaporation : dict, key = datatime.date, value = float
+        amount of evaporation on a given day
+    soilVolume : float
+        soil volume
+    availMoistCap : float
+        availabe moisture capacity
+    irrigation : dict, key = datetime.date, value = list of (float, long) tuples
+        maps from a date to a list of (irrigation amount, treatment_id) tuples.
+        The treatment ID is either 169 (control group) or 170 (stress).
+        Default: empty dict (irrigation data is not available for all
+        days / field trials)
+
+    Returns
+    -------
+    soil_water : defaultdict of defaultdict(float)
+        maps from a datetime.date to a dict two one or two treatments
+        ('control' and 'stress'). a treatment maps to the soil water content
+        (on the given day and with the given treatment).
+    """
+    treatments = ('control', 'stress')
+    soil_water = defaultdict(lambda : defaultdict(float))
+
+    initial_days = set(trial_dates[:14])
+    for day in trial_dates:
+        # Initial 14 days (0-13) ... sum up water gain up to soil capacity
+        if day in initial_days:
+            if day in irrigation:
+                for irri_amount, treatment_id in irrigation[day]:
+                    treatment = treatment_type(treatment_id)
+                    if treatment == 'control':
+                        waterGain = precipitation.get(day, 0.0) + irri_amount
+                    else: # 'stress'
+                        waterGain = irri_amount
+                    yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    current_soil_water = min(soilVolume, waterGain + yesterdays_soil_water)
+                    soil_water[day][treatment] = current_soil_water
+            else:  # no irrigation
+                for treatment in treatments:
+                    if treatment == 'control':
+                        waterGain = precipitation.get(day, 0.0)
+                    else: # 'stress'
+                        waterGain = 0.0
+                    yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    current_soil_water = min(soilVolume, waterGain + yesterdays_soil_water)
+                    soil_water[day][treatment] = current_soil_water
+
+        # From day 14 on calculate net water = soil_water from day before minus
+        # evaporation loss + water gain
+        else:
+            first_day_after_initial_days = trial_dates[14]
+            if day in irrigation:
+                for irri_amount, treatment_id in irrigation[day]:
+                    treatment = treatment_type(treatment_id)
+                    evaporationLoss = evaporation.get(day, 0.0)
+                    waterGain = precipitation.get(day, 0.0) + irri_amount
+                    if day == first_day_after_initial_days:
+                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, 'control')
+                    else:
+                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    netWater = yesterdays_soil_water - evaporationLoss + waterGain
+                    current_soil_water = max(min(netWater, soilVolume), 0)
+                    soil_water[day][treatment] = current_soil_water
+            else:  # no irrigation
+                evaporationLoss = evaporation.get(day, 0.0)
+                waterGain = precipitation.get(day, 0.0)
+                for treatment in treatments:
+                    if day == first_day_after_initial_days:
+                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, 'control')
+                    else:
+                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    netWater = yesterdays_soil_water - evaporationLoss + waterGain
+                    current_soil_water = max(min(netWater, soilVolume), 0)
+                    soil_water[day][treatment] = current_soil_water
+    return soil_water
+
+
 def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
     """
@@ -383,8 +476,15 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
     assert evaporation, "get_evaporation() returned no results"
     flowering_date = datestring2object(flowerDate)
 
-    soil_water = get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
-                                availMoistCap, irrigation)
+    # WARNING: WORKAROUND for exceptional conditions (i.e. a non-movable
+    # shelter) at one specific trial location
+    if culture_id in (56875, 62327):
+        soil_water = get_shelter_soil_water(trial_dates, precipitation,
+                                            evaporation, soilVolume,
+                                            availMoistCap, irrigation)
+    else:
+        soil_water = get_soil_water(trial_dates, precipitation, evaporation,
+                                    soilVolume, availMoistCap, irrigation)
 
     # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
     # The cultures 47109, 56879 have irrigation, but they don't distinguish
