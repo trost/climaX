@@ -101,20 +101,28 @@ def datestring2object(datestring):
     return datetime.date(*map(int, datestring.split('-')))
 
 
-def get_light_intensity(rawData, flowerDate='2012-07-01'):
+def get_light_intensity(light_data, flowerDate='2012-07-01'):
     """
+    ???
+
+    Parameters
+    ----------
+    light_data : list of (datetime.datetime, float) tuples
+        hourly data of the amount of solar radiation
+    flowerDate : str
+        date string in YYYY-MM-DD format
+
     Returns
     -------
     lightIntensity : 2-tuple of float
         light intensity (before flowering, after flowering),
         e.g. (59630.84567157448, 49066.49380313513)
     """
-    L1, L2 = [], []
-    dates = [row[0].date() for row in rawData]
+    dates = [row[0].date() for row in light_data]
     flowering_date = datestring2object(flowerDate)
 
     dailyLight = {date_: [] for date_ in set(dates)}
-    for row in rawData:
+    for row in light_data:
         if row[1] > 0.0:
             dailyLight[row[0].date()].append(row[1])
 
