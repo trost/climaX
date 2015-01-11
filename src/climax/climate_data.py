@@ -151,11 +151,10 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoi
 
     Returns
     -------
-    soil_water : dict or (dict, dict) tuple
-        Iff ``irrigation`` is not empty, this returns a tuple of (control soil
-        water, stress soil water) dictionaries. Both map from a date
-        (datetime.date) to a soil water amount (float).
-        Otherwise, this will only return one such dictionary.
+    soil_water : defaultdict of defaultdict(float)
+        maps from a datetime.date to a dict two one or two treatments
+        ('control' and 'stress'). a treatment maps to the soil water content
+        (on the given day and with the given treatment).
     """
     def yesterdays_soil_value(soil_water, day, treatment):
         yesterday = datetime.date.fromordinal(day.toordinal()-1)
