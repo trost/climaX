@@ -393,7 +393,9 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
 
 def get_evaporation(climate_data):
     """
-    ATT: rel. humidity is coming in as percentage, needs to be fraction
+    tries to calculate the Penman evaporation for all dates in the given
+    climate data. returns a dictionary mapping from a date to its evaporation.
+    dates won't be included, if evaporation couldn't be calculated for them.
 
     Parameters
     ----------
@@ -410,13 +412,25 @@ def get_evaporation(climate_data):
         WARNING: this dictionary contains only those dates, for which
         evaporation data could be calculated!
     """
-    def PenmanEvaporation(vpd, windspeed):
+    def penman_evaporation(vpd, windspeed):
         """
         Calculates evaporation in mm/day from
         vapour pressure deficit and windspeed.
         Formula from Principles of Environmental Physics (Penman 1948)
 
         ATT: Windspeed is coming in as m/s, needs to be mph
+
+        Parameters
+        ----------
+        vpd : float
+            Vapour Pressure Deficit
+        windspeed : float
+            wind in m/s
+
+        Returns
+        -------
+        evaporation : float
+            evaporation occurring in a day
         """
         ms_to_mph = 2.23693629205
         return 0.376 * vpd * (windspeed * ms_to_mph) ** 0.76
@@ -429,6 +443,7 @@ def get_evaporation(climate_data):
     for date_time, temperature, windspeed, humidity in climate_data:
         day = date_time.date()
         if temperature and humidity:
+            # rel. humidity is coming in as percentage, needs to be fraction
             hourly_vpd = calc_VPD(temperature, humidity/100.0)
             daily_vpd[day].append(hourly_vpd)
         if windspeed:
@@ -437,14 +452,14 @@ def get_evaporation(climate_data):
     def mean(numbers):
         return sum(numbers) / float(len(numbers))
 
-    # return daily PenmanEvaporation for daily means of vpd and windspeed
+    # return daily penman_evaporation for daily means of vpd and windspeed
     daily_evaporation = {}
     for day in dates:
         # we can only calculate evaporation if VPD and windspeed are available
         if day in daily_vpd and day in daily_windspeed:
             daily_evaporation[day] = \
-                PenmanEvaporation(mean(daily_vpd[day]),
-                                  mean(daily_windspeed[day]))
+                penman_evaporation(mean(daily_vpd[day]),
+                                   mean(daily_windspeed[day]))
     return daily_evaporation
 
 
