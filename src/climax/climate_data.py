@@ -476,11 +476,11 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
     culture_id : int
         ID of the culture, e.g. 56878
     floweringDate : string
-        ??? date string in YYYY-MM-DD format, e.g. '2012-07-01'
+        date string in YYYY-MM-DD format, e.g. '2012-07-01'
     soilVolume : int or float
         soil volume in ???, e.g. 42
     availMoistCap : float
-        ???, e.g. 0.14
+        available moisture capacity, e.g. 0.14
 
     Returns
     -------
@@ -529,6 +529,7 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
     CURSOR.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
     lightData = [row for row in CURSOR.fetchall()]
     lightIntensity = get_light_intensity(lightData, flowerDate=floweringDate)
+
     has_irrigation = True if irrigation else False
     return has_irrigation, tempStressDays, droughtStressDays, lightIntensity
 
@@ -549,13 +550,13 @@ def main(args=None):
     else:
         args = parser.parse_args(sys.argv[1:])
 
-    irrigation, tempStressDays, droughtStressDays, lightIntensity = \
+    has_irrigation, tempStressDays, droughtStressDays, lightIntensity = \
         get_climate_data(args.culture_id, args.flowering_date,
                          args.soil_volume, args.available_moist_cap)
 
-    print 'irrigation:', irrigation
+    print 'has irrigation:', has_irrigation
     print 'temperature stress days:', tempStressDays
-    if irrigation:
+    if has_irrigation:
         print 'drought stress days:'
         control_drought_days, stress_drought_days = droughtStressDays
         print '\tcontrol:', control_drought_days
