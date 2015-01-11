@@ -235,9 +235,13 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
 def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
                             flowerDate='2012-07-01'):
     """
+    calculates the sum of temperature differences for four different time
+    spans: cold stress days before flowering (BF), cold stress days after
+    flowering (AF), heat stress days BF, heat stress days AF.
+
     Parameters
     ----------
-    climate_data : (datetime.datetime, float, float, float)
+    climate_data : (datetime.datetime, float or None, float or None, float or None)
         a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
         celsius (float), hourly windspeed in m/sec (float),
         hourly relative humidity in % (float)).
