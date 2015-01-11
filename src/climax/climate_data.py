@@ -506,7 +506,7 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
         get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume, availMoistCap,
-                            precipitation, irrigation, stressThreshold=10.0,
+                            precipitation, irrigation, stress_threshold=10.0,
                             flowerDate=floweringDate)
 
     CURSOR.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
