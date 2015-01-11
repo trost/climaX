@@ -6,10 +6,10 @@ import datetime
 from collections import defaultdict
 import argparse
 
-from vpd_heatsum import calc_VPD
-from queries import (TRIAL_DATES_QUERY, PREC_QUERY, IRRI_QUERY,
-                     FAST_CLIMATE_QUERY, DAYLIGHT_QUERY)
-import login
+from climax.vpd_heatsum import calc_VPD
+from climax.queries import (TRIAL_DATES_QUERY, PREC_QUERY, IRRI_QUERY,
+                            FAST_CLIMATE_QUERY, DAYLIGHT_QUERY)
+from climax import login
 
 CONNECTED_TO_DB = False
 
