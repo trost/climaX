@@ -454,7 +454,9 @@ def get_evaporation(climate_data):
 
     # return daily penman_evaporation for daily means of vpd and windspeed
     daily_evaporation = {}
-    for day in dates:
+    # a day may occur several times in climate_date, but we need to calculate
+    # evaporation only once
+    for day in set(dates):
         # we can only calculate evaporation if VPD and windspeed are available
         if day in daily_vpd and day in daily_windspeed:
             daily_evaporation[day] = \
