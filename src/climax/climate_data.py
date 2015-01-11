@@ -428,11 +428,11 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         light intensity (before flowering, after flowering),
         e.g. (59630.84567157448, 49066.49380313513)
     """
+    global CONNECTED_TO_DB
     if not CONNECTED_TO_DB:
         database = login.get_db()
         global CURSOR
         CURSOR = database.cursor()
-        global CONNECTED_TO_DB
         CONNECTED_TO_DB = True
 
     CURSOR.execute(PREC_QUERY % {'CULTURE_ID': culture_id})
