@@ -128,21 +128,25 @@ def get_light_intensity(rawData, flowerDate='2012-07-01'):
     return sum(L1) / len(L1), sum(L2) / len(L2)
 
 
-def get_soil_water(trial_dates, precipitation, evaporation, soilVolume, availMoistCap,
-               irrigation=dict()):
+def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
+                   availMoistCap, irrigation=dict()):
     """
+    calculates the soil water values for all days of a trial and both 'control'
+    and 'stress' treatment.
+
     Parameters
     ----------
     trial_dates : list of datetime.date
         a list of dates beginning with the first date of the
         trial and including the last date of the trial
     precipitation : dict, key = datatime.date, value = float
-        ???
-    evaporation
+        amount of precipitation on a given day
+    evaporation : dict, key = datatime.date, value = float
+        amount of evaporation on a given day
     soilVolume : float
         soil volume
     availMoistCap : float
-        ???
+        availabe moisture capacity
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
         maps from a date to a list of (irrigation amount, treatment_id) tuples.
         The treatment ID is either 169 (control group) or 170 (stress).
