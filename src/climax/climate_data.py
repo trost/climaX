@@ -297,9 +297,9 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
                                               heat_before, heat_after))
 
 
-def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume, availMoistCap, precipitation,
-                        irrigation, stressThreshold=10.0,
-                        flowerDate='2012-07-01'):
+def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
+                            availMoistCap, precipitation, irrigation,
+                            stress_threshold=10.0, flowerDate='2012-07-01'):
     """
     calculates the number of drought stress days before and after the flowering
     date.
@@ -307,26 +307,28 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume, a
     Parameters
     ----------
     culture_id : int
-		culture ID of the trial
+        culture ID of the trial
     trial_dates : list of datetime.date
         a list of dates beginning with the first date of the
         trial and including the last date of the trial
-    climate_data : list of (datetime.datetime, float, float, float) tuples
+    climate_data : (datetime.datetime, float or None, float or None, float or None)
         a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
         celsius (float), hourly windspeed in m/sec (float),
         hourly relative humidity in % (float)).
-        WARNING: all hourly values might be missing (None)!
+        WARNING: some or all hourly values might be missing (None), i.e.
+        climate_data could be a (datetime, None, None, None) tuple
     soilVolume : float
         soil volume
     availMoistCap : float
-        ???
+        availabe moisture capacity
     precipitation : dict, key = datatime.date, value = float
-        ???
+        precipitation on a given day
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
         maps from a date to a list of (irrigation amount, treatment_id) tuples.
         The treatment ID is either 169 (control group) or 170 (stress).
-    stressThreshold : float
-        ???
+    stress_threshold : float
+        a day is considered a stress day if its soil water level is equal to or
+        higher than this threshold
     flowerDate : str
         flowering date in YYYY-MM-DD format
 
