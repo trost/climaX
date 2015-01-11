@@ -237,7 +237,8 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
         a tuple of (datetime YYYY-MM-DD hh:mm:ss, hourly temperature in degree
         celsius (float), hourly windspeed in m/sec (float),
         hourly relative humidity in % (float)).
-        WARNING: all hourly values might be missing (None)!
+        WARNING: some or all hourly values might be missing (None), i.e.
+        climate_data could be a (datetime, None, None, None) tuple
     tub : float
         temperature upper bound
     tlb : float
@@ -283,7 +284,9 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
                 cold_after.append(abs(tlb - tMin))
             if heatStress:
                 heat_after.append(abs(tMax - tub))
-    return tuple(sum(dates) for dates in (cold_before, cold_after, heat_before, heat_after))
+    return tuple(sum(abs_temp_differences)
+                 for abs_temp_differences in (cold_before, cold_after,
+                                              heat_before, heat_after))
 
 
 def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume, availMoistCap, precipitation,
