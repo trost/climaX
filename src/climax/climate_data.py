@@ -307,16 +307,12 @@ def get_shelter_soil_water(trial_dates, precipitation, evaporation, soilVolume,
         # From day 14 on calculate net water = soil_water from day before minus
         # evaporation loss + water gain
         else:
-            first_day_after_initial_days = trial_dates[14]
             if day in irrigation:
                 for irri_amount, treatment_id in irrigation[day]:
                     treatment = treatment_type(treatment_id)
                     evaporationLoss = evaporation.get(day, 0.0)
                     waterGain = precipitation.get(day, 0.0) + irri_amount
-                    if day == first_day_after_initial_days:
-                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, 'control')
-                    else:
-                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
                     netWater = yesterdays_soil_water - evaporationLoss + waterGain
                     current_soil_water = max(min(netWater, soilVolume), 0)
                     soil_water[day][treatment] = current_soil_water
@@ -324,10 +320,7 @@ def get_shelter_soil_water(trial_dates, precipitation, evaporation, soilVolume,
                 evaporationLoss = evaporation.get(day, 0.0)
                 waterGain = precipitation.get(day, 0.0)
                 for treatment in treatments:
-                    if day == first_day_after_initial_days:
-                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, 'control')
-                    else:
-                        yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
+                    yesterdays_soil_water = yesterdays_soil_value(soil_water, day, treatment)
                     netWater = yesterdays_soil_water - evaporationLoss + waterGain
                     current_soil_water = max(min(netWater, soilVolume), 0)
                     soil_water[day][treatment] = current_soil_water
