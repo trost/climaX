@@ -378,15 +378,17 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
                                 availMoistCap, irrigation)
 
     # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
+    # The cultures 47109, 56879 have irrigation, but they don't distinguish
+    # control/stress.
     if irrigation and culture_id not in (47109, 56879):
         control = {date: soil_water[date]['control'] for date in soil_water}
         stress = {date: soil_water[date]['stress'] for date in soil_water}
-        return stress_days(control, flowering_date, stressThreshold), \
-            stress_days(stress, flowering_date, stressThreshold)
+        return stress_days(control, flowering_date, stress_threshold), \
+            stress_days(stress, flowering_date, stress_threshold)
 
     else:
-        no_irrigation = {date: soil_water[date]['control'] for date in soil_water}
-        return stress_days(no_irrigation, flowering_date, stressThreshold)
+        soil_values = {date: soil_water[date]['control'] for date in soil_water}
+        return stress_days(soil_values, flowering_date, stress_threshold)
 
 
 def get_evaporation(climate_data):
