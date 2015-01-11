@@ -340,10 +340,30 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
         Otherwise: ((control DSDs before, control DSDs after),
         (stress DSDs before, stress DSDs after)).
     """
-    def stress_days(soil_water, flowering_date, stressThreshold):
+    def stress_days(soil_values, flowering_date, stress_threshold):
+        """
+        calclulates the number of soil water stress days (before and after
+        the flowering date).
+
+        Parameters
+        ----------
+        soil_values : dict; key = datetime.date, value = float
+            maps from a date to its soil water value
+        flowering_date : datetime.date
+            flowering date of the trial
+        stress_threshold : float
+            a day is considered a stress day if its soil water level is equal
+            to or higher than this threshold
+
+        Returns
+        -------
+        stress_days : (int, int) tuple
+            a tuple containing the number of (stress days before flowering,
+            stress days after flowering)
+        """
         stress_days_before, stress_days_after = 0, 0
-        for day in soil_water:
-            if soil_water[day] < stressThreshold:
+        for day in soil_values:
+            if soil_values[day] < stress_threshold:
                 if day < flowering_date:
                     stress_days_before += 1
                 else:  # day >= flowering_date
