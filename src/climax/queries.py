@@ -32,10 +32,12 @@ I.treatment_id
 FROM irrigation I
 WHERE I.culture_id = %(CULTURE_ID)i
 AND I.invalid = 0
+AND I.treatment_id in (169, 170, 171)
 ORDER BY I.datum;
 """.strip().replace('\n', ' ')
 # results in three columns: date (YYYY-MM-DD), amount (float), treatment_id (169 = control, 170 = stress)
-
+# we added the filter: AND I.treatment_id in (169, 170, 171) to exclude
+# rows with treatment_id 172
 
 
 FAST_CLIMATE_QUERY = """
