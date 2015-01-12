@@ -129,11 +129,11 @@ def get_light_intensity(light_data, flowerDate='2012-07-01'):
     L1, L2 = [], []
     for day in dailyLight:
         if day < flowering_date:
-            L1.append(sum(dailyLight[day]) * len(dailyLight[day]))
+            L1.append(sum(dailyLight[day]))
         else: # day >= flowering_date
-            L2.append(sum(dailyLight[day]) * len(dailyLight[day]))
+            L2.append(sum(dailyLight[day]))
 
-    return sum(L1) / len(L1), sum(L2) / len(L2)
+    return sum(L1) , sum(L2)
 
 
 def yesterdays_soil_value(soil_water, day, treatment):
@@ -394,7 +394,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
 
 def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
                             availMoistCap, precipitation, irrigation,
-                            stress_threshold=10.0, flowerDate='2012-07-01'):
+                            stress_threshold=0.2*42, flowerDate='2012-07-01'):
     """
     calculates the number of drought stress days before and after the flowering
     date.
@@ -625,7 +625,7 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
         get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume, availMoistCap,
-                            precipitation, irrigation, stress_threshold=10.0,
+                            precipitation, irrigation, stress_threshold=0.2*soilVolume,
                             flowerDate=floweringDate)
 
     CURSOR.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
