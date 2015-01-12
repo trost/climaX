@@ -475,7 +475,7 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
         soil_water = get_soil_water(trial_dates, precipitation, evaporation,
                                     soilVolume, irrigation)
 
-    # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
+    # WARNING: WORKAROUND for database management SNAFU, cf. issue #6
     # The cultures 47109, 56879 have irrigation, but they don't distinguish
     # control/stress.
     if irrigation and culture_id not in (47109, 56879):
