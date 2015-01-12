@@ -611,14 +611,14 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         irrigation[date].append( (irri_amount, treatment_id) )
 
     CURSOR.execute(FAST_CLIMATE_QUERY % {'CULTURE_ID': culture_id})
-    climateData = [row for row in CURSOR.fetchall()]
+    climate_data = [row for row in CURSOR.fetchall()]
 
     trial_dates = get_trial_daterange(culture_id, CURSOR)
 
     tempStressDays = \
-        get_temp_stress_days(climateData, flowerDate=floweringDate)
+        get_temp_stress_days(climate_data, flowerDate=floweringDate)
     droughtStressDays = \
-        get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume,
+        get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
                             precipitation, irrigation, stress_factor=0.2,
                             flowerDate=floweringDate)
 
