@@ -37,11 +37,10 @@ def get_climate_data_from_str(cursor, parameter_line):
     CONNECTED_TO_DB = False
 
     columns = parameter_line.split('\t')
-    assert len(columns) == 4, "Line {0} in file {1} doesn't contain 4 columns"
-    culture_id, date, soil_volume, field_capacity = parameter_line.split('\t')
+    assert len(columns) == 3, "Line {0} in file {1} doesn't contain 4 columns"
+    culture_id, date, soil_volume = parameter_line.split('\t')
     return int(culture_id), get_climate_data(int(culture_id), date,
-                                             float(soil_volume),
-                                             float(field_capacity))
+                                             float(soil_volume))
 
 
 def format_climate_data(climate_data):

@@ -166,7 +166,7 @@ def yesterdays_soil_value(soil_water, day, treatment):
 
 
 def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
-                   availMoistCap, irrigation=dict()):
+                   irrigation=dict()):
     """
     calculates the soil water values for all days of a trial and both 'control'
     and 'stress' treatment.
@@ -182,8 +182,6 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
         amount of evaporation on a given day
     soilVolume : float
         soil volume
-    availMoistCap : float
-        availabe moisture capacity
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
         maps from a date to a list of (irrigation amount, treatment_id) tuples.
         The treatment ID is either 169 (control group) or 170 (stress).
@@ -242,7 +240,7 @@ def get_soil_water(trial_dates, precipitation, evaporation, soilVolume,
 
 
 def get_shelter_soil_water(trial_dates, precipitation, evaporation, soilVolume,
-                           availMoistCap, irrigation=dict()):
+                           irrigation=dict()):
     """
     deadline-orientied, hotfix workaround function for a single trial location
     with a non-movable shelter. This function should be merged with
@@ -262,8 +260,6 @@ def get_shelter_soil_water(trial_dates, precipitation, evaporation, soilVolume,
         amount of evaporation on a given day
     soilVolume : float
         soil volume
-    availMoistCap : float
-        availabe moisture capacity
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
         maps from a date to a list of (irrigation amount, treatment_id) tuples.
         The treatment ID is either 169 (control group) or 170 (stress).
@@ -393,7 +389,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
 
 
 def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
-                            availMoistCap, precipitation, irrigation,
+                            precipitation, irrigation,
                             stress_factor=0.2, flowerDate='2012-07-01'):
     """
     calculates the number of drought stress days before and after the flowering
@@ -414,8 +410,6 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
         climate_data could be a (datetime, None, None, None) tuple
     soilVolume : float
         soil volume
-    availMoistCap : float
-        availabe moisture capacity
     precipitation : dict, key = datatime.date, value = float
         precipitation on a given day
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
@@ -476,10 +470,10 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
     if culture_id in (56875, 62327):
         soil_water = get_shelter_soil_water(trial_dates, precipitation,
                                             evaporation, soilVolume,
-                                            availMoistCap, irrigation)
+                                            irrigation)
     else:
         soil_water = get_soil_water(trial_dates, precipitation, evaporation,
-                                    soilVolume, availMoistCap, irrigation)
+                                    soilVolume, irrigation)
 
     # WARNING: WORKAROUND for clusterfuck in database management, cf. issue #6
     # The cultures 47109, 56879 have irrigation, but they don't distinguish
@@ -570,7 +564,7 @@ def get_evaporation(climate_data):
 
 
 def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
-                     soilVolume=42, availMoistCap=0.14):
+                     soilVolume=42):
     """
     extract climate data (temperature stress days, drought stress days and
     light intensity) from the database.
@@ -583,8 +577,6 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         date string in YYYY-MM-DD format, e.g. '2012-07-01'
     soilVolume : int or float
         soil volume in ???, e.g. 42
-    availMoistCap : float
-        available moisture capacity, e.g. 0.14
 
     Returns
     -------
@@ -626,7 +618,7 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
     tempStressDays = \
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
-        get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume, availMoistCap,
+        get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume,
                             precipitation, irrigation, stress_factor=0.2,
                             flowerDate=floweringDate)
 
@@ -647,8 +639,6 @@ def main(args=None):
                         help='date string in YYYY-MM-DD format, e.g. 2012-07-01')
     parser.add_argument('soil_volume', type=float,
                         help='soil volume, e.g. 42 or 27.5')
-    parser.add_argument('available_moist_cap', type=float,
-                        help='moisture capacity, e.g. 0.14')
     if args:
         args = parser.parse_args(args)
     else:
@@ -656,7 +646,7 @@ def main(args=None):
 
     has_irrigation, tempStressDays, droughtStressDays, lightIntensity = \
         get_climate_data(args.culture_id, args.flowering_date,
-                         args.soil_volume, args.available_moist_cap)
+                         args.soil_volume)
 
     print 'has irrigation:', has_irrigation
     print 'temperature stress days:', tempStressDays
