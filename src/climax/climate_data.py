@@ -531,7 +531,8 @@ def get_evaporation(climate_data):
             evaporation occurring in a day
         """
         ms_to_mph = 2.23693629205
-        return 0.376 * vpd * (windspeed * ms_to_mph) ** 0.76
+        windspeed_in_mph = windspeed * ms_to_mph
+        return 0.376 * vpd * (windspeed_in_mph ** 0.76)
 
     # data format: [datetime.datetime, temperature, windspeed, relHumidity]
     dates = [row[0].date() for row in climate_data]
