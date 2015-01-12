@@ -394,7 +394,7 @@ def get_temp_stress_days(climate_data, tub=30.0, tlb=8.0,
 
 def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
                             availMoistCap, precipitation, irrigation,
-                            stress_threshold=0.2*42, flowerDate='2012-07-01'):
+                            stress_factor=0.2, flowerDate='2012-07-01'):
     """
     calculates the number of drought stress days before and after the flowering
     date.
@@ -421,9 +421,10 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
     irrigation : dict, key = datetime.date, value = list of (float, long) tuples
         maps from a date to a list of (irrigation amount, treatment_id) tuples.
         The treatment ID is either 169 (control group) or 170 (stress).
-    stress_threshold : float
-        a day is considered a stress day if its soil water level is equal to or
-        higher than this threshold
+    stress_factor : float
+        stress threshold = stress factor * soil volume. a day is considered
+        a stress day if its soil water level is equal to or higher than this
+        threshold
     flowerDate : str
         flowering date in YYYY-MM-DD format
 
@@ -465,6 +466,7 @@ def get_drought_stress_days(culture_id, trial_dates, climate_data, soilVolume,
                     stress_days_after += 1
         return stress_days_before, stress_days_after
 
+    stress_threshold = soilVolume * stress_factor
     evaporation = get_evaporation(climate_data)
     assert evaporation, "get_evaporation() returned no results"
     flowering_date = datestring2object(flowerDate)
@@ -625,7 +627,7 @@ def get_climate_data(culture_id=56878, floweringDate='2012-07-01',
         get_temp_stress_days(climateData, flowerDate=floweringDate)
     droughtStressDays = \
         get_drought_stress_days(culture_id, trial_dates, climateData, soilVolume, availMoistCap,
-                            precipitation, irrigation, stress_threshold=0.2*soilVolume,
+                            precipitation, irrigation, stress_factor=0.2,
                             flowerDate=floweringDate)
 
     CURSOR.execute(DAYLIGHT_QUERY % {'CULTURE_ID': culture_id})
